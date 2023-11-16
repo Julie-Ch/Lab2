@@ -1,0 +1,51 @@
+#! /usr/bin/env python3
+import os, sys, struct, socket, threading, subprocess, time, signal, logging, argparse, concurrent.futures
+
+Description ="""Client1 che riceve un file di testo da riga di comando e per ogni
+                riga effettua una connessione di Tipo A con il server"""
+ 
+HOST = "127.0.0.1"  
+PORT = 59364    
+MAX = 2048
+
+# creazione del socket per la connessione al server
+def main(file):
+  with open(file, mode="r") as f:
+    for item in f:
+      #print(f"Mi collego a {HOST} sulla porta {PORT}")
+      with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((HOST, PORT))
+        print("Io", s.getsockname(), "sono connesso a", s.getpeername())
+        s.sendall(struct.pack("<c", b'A'))
+        if len(item) > MAX:
+            print("Sequenza troppo lunga")
+            break
+        data = recv_all(s,1)
+        time.sleep(2)
+        print("len: ", len(item))
+        #messo h
+        s.sendall(struct.pack("<h", len(item)))
+        s.send(item.encode())
+        print("Io", s.getsockname(), "ho terminato")
+
+
+def recv_all(conn,n):
+  chunks = b''
+  bytes_recd = 0
+  while bytes_recd < n:
+    chunk = conn.recv(min(n - bytes_recd, 1024))
+    if len(chunk) == 0:
+      raise RuntimeError("socket connection broken")
+    chunks += chunk
+    bytes_recd = bytes_recd + len(chunk)
+  return chunks
+
+if len(sys.argv)==2:
+  main(sys.argv[1])
+else:
+ print("Uso: %s file" % sys.argv[0])
+
+#with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+ #for i in range(2):
+    # attenzione: l'executor non mostra eventuali eccezioni verificate in main() 
+ # executor.submit(main, sys.argv[1])
