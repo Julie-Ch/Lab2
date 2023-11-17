@@ -36,13 +36,15 @@ typedef struct {
   sem_t *sem_data_items;            //semaforo per attesa consumatori nel buffer
   pthread_mutex_t *mutex;           //mutex che gestisce conflitti tra consumatori nel buffer
   pthread_mutex_t *mutexlog;        //mutex per scrivere nel file di log
-  FILE *outfile;
-  tabella_hash *dati_tab;
+  FILE *outfile;                    //puntatore al file di output per i lettori
+  tabella_hash *dati_tab;           //puntatore alla struttura dati relativa alla tabella hash 
 } dati_consumatori;                 //thread ausiliari
 
+
+//struttura dati da passare come argomento al thread gestore per gestire i capi e la tabella hash
 typedef struct{
 
-  pthread_t *capo_lettore;
+  pthread_t *capo_lettore;          
   dati_capo *dati_capo_lettore;
   pthread_t *capo_scrittore;
   dati_capo *dati_capo_scrittore;
@@ -50,23 +52,24 @@ typedef struct{
 
 } dati_gestore;
 
-
+//corpo del capo lettore
 void *consumer_lett_body(void *arg){
 
   dati_consumatori *a = (dati_consumatori*)arg;
   char *s;
-  int t; //short
+  short t; 
 
 
   do {
     //i semafori gestiscono conflitti fra produttori e consumatori
     xsem_wait(a->sem_data_items,__LINE__, __FILE__);
-    //il buffer ha più elementi e possono entrare più consumatori
-    //e modificano cindex
+    //il buffer ha più elementi e possono entrare più consumatori che modificano cindex
     //mutex che gestisce conflitti tra consumatori 
     xpthread_mutex_lock(a->mutex,__LINE__, __FILE__);
+    //prelevo dal buffer la prossima stringa
     s = (a->buffer[((*(a->pcindex))++) % PC_buffer_len]);
     if(s==NULL) {
+      //se sono arrivato in fondo (e leggo il valore di terminazione)
       xpthread_mutex_unlock(a->mutex,__LINE__, __FILE__);
       xsem_post(a->sem_free_slots,__LINE__, __FILE__);
       break;
@@ -74,8 +77,10 @@ void *consumer_lett_body(void *arg){
     xpthread_mutex_unlock(a->mutex,__LINE__, __FILE__);
     xsem_post(a->sem_free_slots,__LINE__, __FILE__);
     readtable_lock(a->dati_tab);
+    //entro nella tabella e chiamo la funzioe
     t = conta(s);
     readtable_unlock(a->dati_tab);
+    //acquisisco la lcok per scrivere sul file
     xpthread_mutex_lock(a->mutexlog, __LINE__, __FILE__);
     fprintf(a->outfile,"stringa: %s, valore di conta: %d\n", s, t);
     xpthread_mutex_unlock(a->mutexlog, __LINE__, __FILE__);
@@ -87,6 +92,7 @@ void *consumer_lett_body(void *arg){
 
 }
 
+//corpo dei thread lettori consumatori
 void *capo_lett_body(void *arg){
 
   dati_capo *a = (dati_capo*)arg;
@@ -116,6 +122,7 @@ void *capo_lett_body(void *arg){
     xpthread_create(&lettori[i], NULL, consumer_lett_body, dati_let+i, __LINE__, __FILE__);
   }
    
+    //apro la FIFO capolet in sola lettura
     int fd = open("capolet", O_RDONLY);
     if(fd<0) xtermina("Errore apertura named pipe lettore", __LINE__, __FILE__);
 
@@ -124,6 +131,7 @@ void *capo_lett_body(void *arg){
     char *max;
     ssize_t e;
 
+    //leggo dalla FIFO
     while(true){
       e  = read(fd,&dim,sizeof(dim));
       while(e==-1){
@@ -135,6 +143,7 @@ void *capo_lett_body(void *arg){
       e = read(fd, max, dim*sizeof(char));
       char *p = strtok_r(max,".,:; \n\r\t", &tmp);
 
+      //tokenizzo per inserire le stringhe nel buffer
       while(p!=NULL){
         xsem_wait((a->sem_free_slots),__LINE__, __FILE__);
         a->buffer[((*(a->ppindex))++) % PC_buffer_len] = strdup(p);
@@ -145,7 +154,7 @@ void *capo_lett_body(void *arg){
     }
 
   //terminazione threads consumatori
-  //NULL lo scrivo r volte per ogni consumatore (ogni consumatore elimina quando legge)
+  //NULL lo scrivo r volte per ogni lettore consumatore
   for(int i=0;i<r;i++) {
     xsem_wait(a->sem_free_slots, __LINE__, __FILE__);
     a->buffer[(*(a->ppindex))++ % PC_buffer_len] = NULL;
@@ -157,17 +166,19 @@ void *capo_lett_body(void *arg){
     xpthread_join(lettori[i],NULL,__LINE__, __FILE__);
   }
 
-  xclose(fd, __LINE__, __FILE__); //chiude estremità lettura
+  //chiudo estremità lettura della FIFO
+  xclose(fd, __LINE__, __FILE__); 
   if(fclose(outfile)!=0) xtermina("errore fclose\n", __LINE__, __FILE__);
   xsem_destroy(a->sem_data_items,__LINE__, __FILE__);
   xsem_destroy(a->sem_free_slots,__LINE__, __FILE__);
   xpthread_mutex_destroy(&mux_let_c, __LINE__, __FILE__);
   xpthread_mutex_destroy(&mux_log, __LINE__, __FILE__);
-  //pthread_exit(NULL);
-  return (void *) 0;
 
+  //non uso pthread_exit(NULL); per non far uscire errore di sistema
+  return (void *) 0;
 }
 
+//corpo del consumatore scrittore
 void *consumer_scritt_body(void *arg){
 
   dati_consumatori *a = (dati_consumatori*)arg;
@@ -203,6 +214,7 @@ void *consumer_scritt_body(void *arg){
  
 }
 
+//corpo del capo scrittore
 void *capo_scritt_body(void *arg){
 
   dati_capo *a = (dati_capo*)arg;
@@ -225,6 +237,7 @@ void *capo_scritt_body(void *arg){
     xpthread_create(&scrittori[i], NULL, consumer_scritt_body, dati_sc+i, __LINE__, __FILE__);
   }
 
+  //apro la FIFO caposc in sola lettura
 	int fd = open("caposc", O_RDONLY);
   if(fd<0) xtermina("Errore apertura named pipe scrittore", __LINE__, __FILE__);
 
@@ -233,8 +246,8 @@ void *capo_scritt_body(void *arg){
   char *max;
 	ssize_t e;
 
+  //leggo dalla FIFO
   while(true){
-    //printf("dim prima: %d", dim);
     e  = read(fd,&dim,sizeof(dim));
     while(e==-1){
       e  = read(fd,&dim,sizeof(dim));
@@ -248,6 +261,7 @@ void *capo_scritt_body(void *arg){
 
     char *p = strtok_r(max,".,:; \n\r\t", &tmp);
 
+    //tokenizzo per inserire le stringhe nel buffer
     while(p!=NULL){
       
       fflush(stdout);
@@ -275,7 +289,7 @@ void *capo_scritt_body(void *arg){
     xpthread_join(scrittori[i],NULL,__LINE__, __FILE__);
   }
 
-  
+  //chiudo estremità lettura della FIFO
   xclose(fd,__LINE__, __FILE__); //chiude estremità lettura
   xsem_destroy(a->sem_data_items,__LINE__, __FILE__);
   xsem_destroy(a->sem_free_slots,__LINE__, __FILE__);
@@ -285,6 +299,7 @@ void *capo_scritt_body(void *arg){
 
 }
 
+//corpo del thread gestore
 void *gestione(void* arg){
 
   // recupera argomento passato al thread
@@ -312,6 +327,7 @@ void *gestione(void* arg){
 
     }else if(s == SIGTERM){ //SIGTERM
 
+      //aspetto la terminazione dei thread capi
       xpthread_join(*(d->capo_lettore), NULL, __LINE__, __FILE__);
       xpthread_join(*(d->capo_scrittore), NULL, __LINE__, __FILE__);
       printf("stringhe contenute nella tabella: %d\n", *((d->dati_tab)->dati_aggiunti));
