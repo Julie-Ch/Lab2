@@ -12,9 +12,10 @@ MAX = 2048
 def main(file):
   # inizializzazione socket client 
   with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-      # la prossima chiamata è blocking 
+    #connessione ad Host via Port 
     s.connect((HOST, PORT))
     print("Io", s.getsockname(), "sono connesso a", s.getpeername())
+    #invio del carattere per il tipo di connessione
     s.sendall(struct.pack("<c",b'B'))
     with open(file, mode="r") as f:
       for item in f:
@@ -24,13 +25,16 @@ def main(file):
           print("Sequenza troppo lunga")
           break
         print("l:",len(item))
+        #invio la lunghezza e la stringa
         s.sendall(struct.pack("<h",len(item)))
         s.send(item.encode())
+      #ricevo byte inutile
       data = recv_all(s,1)
+      #ed invio uno 0 per terminare
       s.sendall(struct.pack("<i",0))
       print(s.getsockname(), "finito")
 
-
+#funzione recv_all come da lezione
 def recv_all(conn,n):
   chunks = b''
   bytes_recd = 0

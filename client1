@@ -28,7 +28,7 @@ def main(file):
         s.send(item.encode())
         print("Io", s.getsockname(), "ho terminato")
 
-
+#funzione recv_all come da lezione
 def recv_all(conn,n):
   chunks = b''
   bytes_recd = 0
