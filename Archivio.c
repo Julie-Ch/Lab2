@@ -18,6 +18,7 @@ pid_t gettid(void)
   #endif
 }
 
+//strutture di supporto
 
 typedef struct {
   char **buffer;              //buffer di stringhe prod/cons
