@@ -39,7 +39,7 @@ def main(t, r, w, v):
     if(v == True):
       p = subprocess.Popen(["valgrind","--leak-check=full", "--track-origins=yes",
       "--show-leak-kinds=all", 
-      "--log-file=valgrind-%p.log", 
+      "--log-file=valgrind-%p.log", "-s",
       "./Archivio", str(r), str(w)], stderr=f, start_new_session=True)
     else:   
       p = subprocess.Popen(["./Archivio", str(r), str(w)], stderr=f, start_new_session=True)
