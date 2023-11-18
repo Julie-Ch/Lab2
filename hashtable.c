@@ -15,7 +15,7 @@ ENTRY *crea_entry(char *s, int n) {
   return e;
 }
 
-//funzione che distrugge una entry
+//funzione che distrugge una entry della tabella hash
 void distruggi_entry(ENTRY *e)
 {
   free(e->key); free(e->data); free(e);
