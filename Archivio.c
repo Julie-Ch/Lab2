@@ -324,15 +324,13 @@ void *gestione(void* arg){
     //printf("Mi è stato inviato il valore %d\n",sinfo.si_value.sival_int); //si_value è una union
     if(s ==  SIGINT){ //SIGINT
       fprintf(stderr, "stringhe contenute nella tabella %d\n", *((d->dati_tab)->dati_aggiunti));
-
     }else if(s == SIGTERM){ //SIGTERM
-
       //aspetto la terminazione dei thread capi
       xpthread_join(*(d->capo_lettore), NULL, __LINE__, __FILE__);
       xpthread_join(*(d->capo_scrittore), NULL, __LINE__, __FILE__);
       printf("stringhe contenute nella tabella: %d\n", *((d->dati_tab)->dati_aggiunti));
       pthread_exit(NULL);
-    }     
+    }    
   }
   return NULL;
 }

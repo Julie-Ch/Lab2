@@ -20,7 +20,7 @@ logging.basicConfig(filename='server.log',
                     #data:                lvl logging      msg
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-# nomi delle pipe
+# nomi delle FIFO
 Pipe_let = "capolet"
 Pipe_sc = "caposc"
 
@@ -38,14 +38,16 @@ def main(t, r, w, v):
       p = subprocess.Popen(["valgrind","--leak-check=full", "--track-origins=yes",
       "--show-leak-kinds=all", 
       "--log-file=valgrind-%p.log", 
-      "./Archivio", str(r), str(w)], stderr=f)
+      "./Archivio", str(r), str(w)], stderr=f, start_new_session=True)
     else:   
-      p = subprocess.Popen(["./Archivio", str(r), str(w)], stderr=f)
+      p = subprocess.Popen(["./Archivio", str(r), str(w)], stderr=f, start_new_session=True)
 
     fd_l = open(Pipe_let, "wb")
     fd_s = open(Pipe_sc, "wb")
 
     pid = os.getpid()
+
+    print("il pid dell'archivio è: ", p.pid)
 
     print("Server: archivio in esecuzione")
 
