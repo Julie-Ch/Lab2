@@ -321,9 +321,9 @@ void *gestione(void* arg){
     if(e==-1) perror("Errore sigwaitinfo");
     s = sinfo.si_signo;
     //printf("Thread gestore %d svegliato dal segnale %d da %d\n",gettid(),s,sinfo.si_pid);
-    //printf("Mi è stato inviato il valore %d\n",sinfo.si_value.sival_int); //si_value è una union
+    //printf("Mi è stato inviato il valore %d\n",sinfo.si_value.sival_int); 
     if(s ==  SIGINT){ //SIGINT
-      fprintf(stderr, "stringhe contenute nella tabella %d\n", *((d->dati_tab)->dati_aggiunti));
+      fprintf(stderr, "stringhe contenute nella tabella: %d\n", *((d->dati_tab)->dati_aggiunti));
     }else if(s == SIGTERM){ //SIGTERM
       //aspetto la terminazione dei thread capi
       xpthread_join(*(d->capo_lettore), NULL, __LINE__, __FILE__);
@@ -339,7 +339,6 @@ void *gestione(void* arg){
 int main(int argc, char *argv[]) {
 
   //leggi da linea di comando
-
   if(argc != 3){
     printf("Uso: %s intero1 intero2\n", argv[0]);
     exit(1);
@@ -353,7 +352,7 @@ int main(int argc, char *argv[]) {
   assert(w > 0);
   assert(r > 0);
 
-  //creo e inizializzo la tabella hash
+  //creo e inizializzo la tabella hash e la struttura dati associata
   int ht = hcreate(Num_elem);
   if(ht == 0) xtermina("Errore creazione HT", __LINE__, __FILE__);
   tabella_hash dati_tab;

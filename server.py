@@ -8,19 +8,20 @@ HOST = "127.0.0.1"
 PORT = 59364
 MAX = 2048
 
+#
 timezone = pytz.timezone('Europe/Rome')
 now = datetime.datetime.now(tz = timezone)
 current_time = datetime.datetime.now()
-print(current_time.strftime("%H:%M:%S"))
+#print(current_time.strftime("%H:%M:%S"))
 
 
-# configurazione del logging
+#configurazione del file di log del server
 logging.basicConfig(filename='server.log', 
                     level=logging.DEBUG, datefmt='%d/%m/%y %H:%M:%S',
                     #data:                lvl logging      msg
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-# nomi delle FIFO
+#nomi delle FIFO
 Pipe_let = "capolet"
 Pipe_sc = "caposc"
 
@@ -28,10 +29,11 @@ def main(t, r, w, v):
 
   print(f"Server lanciato con {t} threads, {r} lettori e {w} scrittori nell'archivio")
 
+  #creo le FIFO
   os.mkfifo(Pipe_let)
   os.mkfifo(Pipe_sc)
 
-  
+  #error_file.txt è il file dove andrà output di stderr
   with open('error_file.txt', 'w') as f:
 
     if(v == True):
@@ -51,19 +53,25 @@ def main(t, r, w, v):
 
     print("Server: archivio in esecuzione")
 
-    # creo il server socket
+    #apro il server socket
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-      try:  
+      try: 
+        #setto i parametri del socket 
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   
         s.bind((HOST, PORT))
+        #socket in ascolto
         s.listen()
         with concurrent.futures.ThreadPoolExecutor(max_workers=t) as executor:
           while True:
             print("Server: In attesa di un client...")
+            #accetto la connessione
             conn, addr = s.accept()
+            #e passo al thread la funzione di gestione e i parametri
             executor.submit(gestisci_connessione, conn, addr, fd_l, fd_s, p)
+      #se intercetto una SIGINT la gestisco
       except KeyboardInterrupt:
         print('Server: Terminazione Server')
+        #chiudo il socket, le FIFO e mando SIGTERM al processo Archivio
         s.shutdown(socket.SHUT_RDWR)
         os.unlink(Pipe_let)
         os.unlink(Pipe_sc)
@@ -80,7 +88,9 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p):
     tipo = struct.unpack("<c", data)[0].decode()
     if tipo == 'A':
       #print("Tipo A")
-      conn.sendall(b'x')
+      #invio il carattere inutile
+      #conn.sendall(b'x')
+      #ricevo la lunghezza dell'input
       data = recv_all(conn,2)
       l = struct.unpack("<h",data)[0]
       b=b+(2+l)
@@ -95,7 +105,7 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p):
     elif tipo == 'B':
       #print("Tipo B")
       while(True):    
-        conn.sendall(b'x')
+        #conn.sendall(b'x')
         data = recv_all(conn,2)
         l = struct.unpack("<h",data)[0]
         if(l==0):
