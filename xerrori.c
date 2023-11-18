@@ -1,5 +1,7 @@
 #include "xerrori.h"
 
+// file recuperato dalle lezioni
+
 // collezione di chiamate a funzioni di sistema con controllo output
 // i prototipi sono in xerrori.h
 
