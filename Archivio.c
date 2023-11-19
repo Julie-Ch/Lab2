@@ -77,7 +77,7 @@ void *consumer_lett_body(void *arg){
     xpthread_mutex_unlock(a->mutex,__LINE__, __FILE__);
     xsem_post(a->sem_free_slots,__LINE__, __FILE__);
     readtable_lock(a->dati_tab);
-    //entro nella tabella e chiamo la funzioe
+    //entro nella tabella e chiamo la funzione
     t = conta(s);
     readtable_unlock(a->dati_tab);
     //acquisisco la lcok per scrivere sul file
