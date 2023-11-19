@@ -40,7 +40,7 @@ int conta(char *s){
 
   ENTRY *e = crea_entry(s, 1);
   ENTRY *r = hsearch(*e, FIND);
-  if(r == NULL) return 0;
+  if(r == NULL) {distruggi_entry(e);return 0;}
   else {
     distruggi_entry(e);
     return (*((int *)r->data));
