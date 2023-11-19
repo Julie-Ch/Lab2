@@ -89,7 +89,7 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p):
     if tipo == 'A':
       #print("Tipo A")
       #invio il carattere inutile
-      #conn.sendall(b'x')
+      conn.sendall(b'x')
       #ricevo la lunghezza dell'input
       data = recv_all(conn,2)
       l = struct.unpack("<h",data)[0]
@@ -105,7 +105,7 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p):
     elif tipo == 'B':
       #print("Tipo B")
       while(True):    
-        #conn.sendall(b'x')
+        conn.sendall(b'x')
         data = recv_all(conn,2)
         l = struct.unpack("<h",data)[0]
         if(l==0):

@@ -20,7 +20,7 @@ def main(file):
     with open(file, mode="r") as f:
       for item in f:
         # legge il byte inutile
-         #data = recv_all(s,1)
+        data = recv_all(s,1)
         if len(item) > MAX:
           print("Sequenza troppo lunga")
           break
@@ -29,7 +29,7 @@ def main(file):
         s.sendall(struct.pack("<h",len(item)))
         s.send(item.encode())
       #ricevo byte inutile
-      #data = recv_all(s,1)
+      data = recv_all(s,1)
       #ed invio uno 0 per terminare
       s.sendall(struct.pack("<i",0))
       print(s.getsockname(), "finito")

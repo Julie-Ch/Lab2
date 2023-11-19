@@ -20,8 +20,8 @@ def main(file):
         if len(item) > MAX:
             print("Sequenza troppo lunga")
             break
-        #data = recv_all(s,1)
-        #time.sleep(2)
+        data = recv_all(s,1)
+        time.sleep(2)
         print("len: ", len(item))
         #messo h
         s.sendall(struct.pack("<h", len(item)))
