@@ -93,9 +93,9 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p):
       #ricevo la lunghezza dell'input
       data = recv_all(conn,2)
       l = struct.unpack("<h",data)[0]
-      b=b+(2+l)
+      #b=b+(2+l)
       seq = recv_all(conn, l).decode()
-      logging.debug(f"Connessione con {addr} di tipo {tipo}, {b} bytes inviati")
+      logging.debug(f"Connessione con {addr} di tipo {tipo}, {l+2} bytes inviati")
       bd = struct.pack("<h", l)
       fd_l.write(bd)
       fd_l.flush()
@@ -110,14 +110,14 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p):
         l = struct.unpack("<h",data)[0]
         if(l==0):
           break
-        b=b+(3+l)
+        #b=b+(3+l)
+        logging.debug(f"Connessione con {addr} di tipo {tipo}, {3+l} bytes inviati") 
         seq = recv_all(conn, l).decode()
         bd = struct.pack("<h", l)
         fd_s.write(bd)
         fd_s.flush()
         fd_s.write(seq.encode())
         fd_s.flush()
-      logging.debug(f"Connessione con {addr} di tipo {tipo}, {b} bytes inviati") 
       print(f"{threading.current_thread().name} finito con {addr}")
     else:
       print("tipo di connessione non supportato")
