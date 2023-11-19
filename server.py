@@ -12,8 +12,6 @@ MAX = 2048
 timezone = pytz.timezone('Europe/Rome')
 now = datetime.datetime.now(tz = timezone)
 current_time = datetime.datetime.now()
-#print(current_time.strftime("%H:%M:%S"))
-
 
 #configurazione del file di log del server
 logging.basicConfig(filename='server.log', 
@@ -87,15 +85,13 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p):
     data = recv_all(conn,1) 
     tipo = struct.unpack("<c", data)[0].decode()
     if tipo == 'A':
-      #print("Tipo A")
       #invio il carattere inutile
       conn.sendall(b'x')
       #ricevo la lunghezza dell'input
       data = recv_all(conn,2)
       l = struct.unpack("<h",data)[0]
-      #b=b+(2+l)
       seq = recv_all(conn, l).decode()
-      logging.debug(f"Connessione con {addr} di tipo {tipo}, {l+2} bytes inviati")
+      logging.debug(f"Connessione con {addr} di tipo {tipo}, {l+3} bytes inviati")
       bd = struct.pack("<h", l)
       fd_l.write(bd)
       fd_l.flush()
@@ -103,14 +99,12 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p):
       fd_l.flush()
       print(f"{threading.current_thread().name} finito con {addr}")
     elif tipo == 'B':
-      #print("Tipo B")
       while(True):    
         conn.sendall(b'x')
         data = recv_all(conn,2)
         l = struct.unpack("<h",data)[0]
         if(l==0):
           break
-        #b=b+(3+l)
         logging.debug(f"Connessione con {addr} di tipo {tipo}, {3+l} bytes inviati") 
         seq = recv_all(conn, l).decode()
         bd = struct.pack("<h", l)
