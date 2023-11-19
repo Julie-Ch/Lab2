@@ -26,7 +26,7 @@ typedef struct {
   sem_t *sem_free_slots;      //sem per attesa produttore
   sem_t *sem_data_items;      //sem per attesa consumatori
   int aux;                    //numero ausiliari
-  tabella_hash *dati_tab;
+  tabella_hash *dati_tab;     //puntatore alla struttura dati relativa alla tabella hash 
 } dati_capo;    
 
 typedef struct {
@@ -44,7 +44,7 @@ typedef struct {
 //struttura dati da passare come argomento al thread gestore per gestire i capi e la tabella hash
 typedef struct{
 
-  pthread_t *capo_lettore;          
+  pthread_t *capo_lettore;          //         
   dati_capo *dati_capo_lettore;
   pthread_t *capo_scrittore;
   dati_capo *dati_capo_scrittore;
@@ -52,7 +52,7 @@ typedef struct{
 
 } dati_gestore;
 
-//corpo del capo lettore
+//corpo del lettore consumatore
 void *consumer_lett_body(void *arg){
 
   dati_consumatori *a = (dati_consumatori*)arg;
@@ -68,19 +68,20 @@ void *consumer_lett_body(void *arg){
     xpthread_mutex_lock(a->mutex,__LINE__, __FILE__);
     //prelevo dal buffer la prossima stringa
     s = (a->buffer[((*(a->pcindex))++) % PC_buffer_len]);
-    if(s==NULL) {
+    /*if(s==NULL) {
       //se sono arrivato in fondo (e leggo il valore di terminazione)
       xpthread_mutex_unlock(a->mutex,__LINE__, __FILE__);
       xsem_post(a->sem_free_slots,__LINE__, __FILE__);
       break;
-    }
+    }*/
     xpthread_mutex_unlock(a->mutex,__LINE__, __FILE__);
     xsem_post(a->sem_free_slots,__LINE__, __FILE__);
-    readtable_lock(a->dati_tab);
+    if(s == NULL) break;
+    //readtable_lock(a->dati_tab);
     //entro nella tabella e chiamo la funzione
     t = conta(s);
-    readtable_unlock(a->dati_tab);
-    //acquisisco la lcok per scrivere sul file
+    //readtable_unlock(a->dati_tab);
+    //acquisisco la lock per scrivere sul file
     xpthread_mutex_lock(a->mutexlog, __LINE__, __FILE__);
     fprintf(a->outfile,"stringa: %s, valore di conta: %d\n", s, t);
     xpthread_mutex_unlock(a->mutexlog, __LINE__, __FILE__);
@@ -165,6 +166,7 @@ void *capo_lett_body(void *arg){
   for(int i=0;i<r;i++) {
     xpthread_join(lettori[i],NULL,__LINE__, __FILE__);
   }
+  puts("dopo join lettori");
 
   //chiudo estremità lettura della FIFO
   xclose(fd, __LINE__, __FILE__); 
@@ -192,18 +194,18 @@ void *consumer_scritt_body(void *arg){
     //mutex che gestisce conflitti tra consumatori 
     xpthread_mutex_lock(a->mutex,__LINE__, __FILE__);
     s = (a->buffer[((*(a->pcindex))++) % PC_buffer_len]);
-    setbuf(stdout, NULL);
-    fflush(stdout);
-    if(s==NULL) {
+    //setbuf(stdout, NULL);
+    //fflush(stdout);
+    /*if(s==NULL) {
+      //se sono arrivato in fondo (e leggo il valore di terminazione)
       xpthread_mutex_unlock(a->mutex,__LINE__, __FILE__);
       xsem_post(a->sem_free_slots,__LINE__, __FILE__);
       break;
-    }
+    }*/
     xpthread_mutex_unlock(a->mutex,__LINE__, __FILE__);
     xsem_post(a->sem_free_slots,__LINE__, __FILE__);
+    if(s==NULL) break;
     writetable_lock(a->dati_tab);
-    setbuf(stdout, NULL);
-    //fflush(stdout);
     aggiungi(s, a->dati_tab);
     writetable_unlock(a->dati_tab);
     free(s);
@@ -252,23 +254,19 @@ void *capo_scritt_body(void *arg){
     while(e==-1){
       e  = read(fd,&dim,sizeof(dim));
     };
-    fflush(stdout);
+    //fflush(stdout);
 
     if(e==0) break;
     assert(e < Max_sequence_length);
     max = calloc((dim+1),sizeof(char));
     e = read(fd, max, dim*sizeof(char));
-
     char *p = strtok_r(max,".,:; \n\r\t", &tmp);
 
     //tokenizzo per inserire le stringhe nel buffer
-    while(p!=NULL){
-      
-      fflush(stdout);
+    while(p!=NULL){ 
       xsem_wait((a->sem_free_slots),__LINE__, __FILE__);
       a->buffer[((*(a->ppindex))++) % PC_buffer_len] = strdup(p);
-                fflush(stdout);
-      setbuf(stdout, NULL);
+      //fflush(stdout);
       xsem_post((a->sem_data_items),__LINE__, __FILE__);
       p = strtok_r(NULL,".,:; \n\r\t", &tmp);
     }
@@ -288,6 +286,7 @@ void *capo_scritt_body(void *arg){
   for(int i=0;i<w;i++) {
     xpthread_join(scrittori[i],NULL,__LINE__, __FILE__);
   }
+  puts("dopo join scrittori");
 
   //chiudo estremità lettura della FIFO
   xclose(fd,__LINE__, __FILE__); //chiude estremità lettura
@@ -328,7 +327,8 @@ void *gestione(void* arg){
       //aspetto la terminazione dei thread capi
       xpthread_join(*(d->capo_lettore), NULL, __LINE__, __FILE__);
       xpthread_join(*(d->capo_scrittore), NULL, __LINE__, __FILE__);
-      printf("stringhe contenute nella tabella: %d\n", *((d->dati_tab)->dati_aggiunti));
+      puts("dopo join dei capi");
+      //printf("stringhe contenute nella tabella: %d\n", *((d->dati_tab)->dati_aggiunti));
       pthread_exit(NULL);
     }    
   }
@@ -422,6 +422,9 @@ int main(int argc, char *argv[]) {
 
   //aspetto che il gestore termini
   xpthread_join(gestore, NULL, __LINE__, __FILE__);
+  puts("dopo join gestore");
+
+  printf("stringhe contenute nella tabella: %d\n", *((dati_tab).dati_aggiunti));
 
 
   //distruggo mutex e cv della tabella
