@@ -44,7 +44,7 @@ typedef struct {
 //struttura dati da passare come argomento al thread gestore per gestire i capi e la tabella hash
 typedef struct{
 
-  pthread_t *capo_lettore;          //         
+  pthread_t *capo_lettore;                  
   dati_capo *dati_capo_lettore;
   pthread_t *capo_scrittore;
   dati_capo *dati_capo_scrittore;
@@ -59,7 +59,6 @@ void *consumer_lett_body(void *arg){
   char *s;
   short t; 
 
-
   do {
     //i semafori gestiscono conflitti fra produttori e consumatori
     xsem_wait(a->sem_data_items,__LINE__, __FILE__);
@@ -68,19 +67,11 @@ void *consumer_lett_body(void *arg){
     xpthread_mutex_lock(a->mutex,__LINE__, __FILE__);
     //prelevo dal buffer la prossima stringa
     s = (a->buffer[((*(a->pcindex))++) % PC_buffer_len]);
-    /*if(s==NULL) {
-      //se sono arrivato in fondo (e leggo il valore di terminazione)
-      xpthread_mutex_unlock(a->mutex,__LINE__, __FILE__);
-      xsem_post(a->sem_free_slots,__LINE__, __FILE__);
-      break;
-    }*/
     xpthread_mutex_unlock(a->mutex,__LINE__, __FILE__);
     xsem_post(a->sem_free_slots,__LINE__, __FILE__);
     if(s == NULL) break;
-    //readtable_lock(a->dati_tab);
     //entro nella tabella e chiamo la funzione
     t = conta(s);
-    //readtable_unlock(a->dati_tab);
     //acquisisco la lock per scrivere sul file
     xpthread_mutex_lock(a->mutexlog, __LINE__, __FILE__);
     fprintf(a->outfile,"stringa: %s, valore di conta: %d\n", s, t);
@@ -88,7 +79,7 @@ void *consumer_lett_body(void *arg){
     free(s);
   } while(true);
 
-  //pthread_exit(NULL); 
+  //pthread_exit(NULL); tolto per evitare errori di sistema
   return (void *) 0;
 
 }
