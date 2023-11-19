@@ -157,7 +157,6 @@ void *capo_lett_body(void *arg){
   for(int i=0;i<r;i++) {
     xpthread_join(lettori[i],NULL,__LINE__, __FILE__);
   }
-  puts("dopo join lettori");
 
   //chiudo estremità lettura della FIFO
   xclose(fd, __LINE__, __FILE__); 
@@ -277,7 +276,6 @@ void *capo_scritt_body(void *arg){
   for(int i=0;i<w;i++) {
     xpthread_join(scrittori[i],NULL,__LINE__, __FILE__);
   }
-  puts("dopo join scrittori");
 
   //chiudo estremità lettura della FIFO
   xclose(fd,__LINE__, __FILE__); //chiude estremità lettura
@@ -310,16 +308,12 @@ void *gestione(void* arg){
     int e = sigwaitinfo(&mask,&sinfo);
     if(e==-1) perror("Errore sigwaitinfo");
     s = sinfo.si_signo;
-    //printf("Thread gestore %d svegliato dal segnale %d da %d\n",gettid(),s,sinfo.si_pid);
-    //printf("Mi è stato inviato il valore %d\n",sinfo.si_value.sival_int); 
     if(s ==  SIGINT){ //SIGINT
       fprintf(stderr, "stringhe contenute nella tabella: %d\n", *((d->dati_tab)->dati_aggiunti));
     }else if(s == SIGTERM){ //SIGTERM
       //aspetto la terminazione dei thread capi
       xpthread_join(*(d->capo_lettore), NULL, __LINE__, __FILE__);
       xpthread_join(*(d->capo_scrittore), NULL, __LINE__, __FILE__);
-      puts("dopo join dei capi");
-      //printf("stringhe contenute nella tabella: %d\n", *((d->dati_tab)->dati_aggiunti));
       pthread_exit(NULL);
     }    
   }
@@ -413,7 +407,6 @@ int main(int argc, char *argv[]) {
 
   //aspetto che il gestore termini
   xpthread_join(gestore, NULL, __LINE__, __FILE__);
-  puts("dopo join gestore");
 
   printf("stringhe contenute nella tabella: %d\n", *((dati_tab).dati_aggiunti));
 
