@@ -9,7 +9,6 @@ typedef struct {
   int *lettori_tabella;             //lettori nella tabella 
   pthread_mutex_t *mutabella;       //mutex per la tabella hash
   pthread_cond_t *condStabella;     //cv per scrittori
-  pthread_cond_t *condLtabella;     //cv per lettori
 } tabella_hash;
 
 //funzione che crea una entry per la tabella hash
@@ -29,12 +28,6 @@ void table_init(tabella_hash *tab);
 
 //funzione che distrugge una tabella hash
 void table_destroy(tabella_hash *tab);
-
-//funzione che permette al lettore l'accesso alla tabella
-//void readtable_lock(tabella_hash *tab);
-
-//funzione che permette ad un lettore di uscire dalla tabella e segnalare la sua uscita
-//void readtable_unlock(tabella_hash *tab);
   
 //funzione che permette ad uno scrittore di accedere alla tabella
 void writetable_lock(tabella_hash *tab);

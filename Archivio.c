@@ -341,12 +341,11 @@ int main(int argc, char *argv[]) {
   int ht = hcreate(Num_elem);
   if(ht == 0) xtermina("Errore creazione HT", __LINE__, __FILE__);
   tabella_hash dati_tab;
-  pthread_cond_t condScrittoriTab, condLettoriTab;
+  pthread_cond_t condScrittoriTab;// condLettoriTab;
   pthread_mutex_t mutexTab;
   int lett_tab, dati_agg;
   dati_tab.lettori_tabella=&lett_tab;
   dati_tab.dati_aggiunti=&dati_agg;
-  dati_tab.condLtabella = &condLettoriTab;
   dati_tab.condStabella = &condScrittoriTab;
   dati_tab.mutabella = &mutexTab;
   table_init(&dati_tab);
@@ -406,7 +405,6 @@ int main(int argc, char *argv[]) {
   xpthread_join(gestore, NULL, __LINE__, __FILE__);
 
   printf("stringhe contenute nella tabella: %d\n", *((dati_tab).dati_aggiunti));
-
 
   //distruggo mutex e cv della tabella
   hdestroy();

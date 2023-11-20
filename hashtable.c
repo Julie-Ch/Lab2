@@ -55,31 +55,14 @@ void table_init(tabella_hash *tab){
     *(tab->dati_aggiunti) = 0;
     xpthread_mutex_init(tab->mutabella,NULL,__LINE__,__FILE__);
     xpthread_cond_init(tab->condStabella,NULL,__LINE__,__FILE__);
-    xpthread_cond_init(tab->condLtabella,NULL,__LINE__,__FILE__);
+    //xpthread_cond_init(tab->condLtabella,NULL,__LINE__,__FILE__);
 }
 
 void table_destroy(tabella_hash *tab){
   xpthread_mutex_destroy(tab->mutabella, __LINE__, __FILE__);
   xpthread_cond_destroy(tab->condStabella, __LINE__, __FILE__);
-  xpthread_cond_destroy(tab->condLtabella, __LINE__, __FILE__);
+  //xpthread_cond_destroy(tab->condLtabella, __LINE__, __FILE__);
 }
-
-/*
-void readtable_lock(tabella_hash *tab){
-
-  xpthread_mutex_lock(tab->mutabella, __LINE__,__FILE__);
-  (*(tab->lettori_tabella))++;
-  xpthread_mutex_unlock(tab->mutabella, __LINE__,__FILE__);
-}
-
-void readtable_unlock(tabella_hash *tab){
-
-  assert(*(tab->lettori_tabella)>0);  // ci deve essere almeno un reader (me stesso)
-  xpthread_mutex_lock(tab->mutabella, __LINE__, __FILE__);
-  (*(tab->lettori_tabella))--;                  // cambio di stato       
-  xpthread_cond_broadcast(tab->condStabella,__LINE__, __FILE__);
-  xpthread_mutex_unlock(tab->mutabella,__LINE__,__FILE__);
-}*/
   
 // accesso tabella da parte di uno scrittore 
 void writetable_lock(tabella_hash *tab){
