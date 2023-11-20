@@ -18,17 +18,17 @@ pid_t gettid(void)
   #endif
 }
 
-//strutture di supporto
-
+//strutture dati relativa ai capi (lettore / scrittore)
 typedef struct {
-  char **buffer;              //buffer di stringhe prod/cons
-  int *ppindex;               //primo indice disponibile per produttore
-  sem_t *sem_free_slots;      //sem per attesa produttore
-  sem_t *sem_data_items;      //sem per attesa consumatori
-  int aux;                    //numero ausiliari
-  tabella_hash *dati_tab;     //puntatore alla struttura dati relativa alla tabella hash 
-} dati_capo;    
+  char **buffer;                    //buffer di stringhe prod/cons
+  int *ppindex;                     //primo indice disponibile per produttore
+  sem_t *sem_free_slots;            //semaforo per attesa produttore
+  sem_t *sem_data_items;            //semaforo per attesa consumatori
+  int aux;                          //numero ausiliari
+  tabella_hash *dati_tab;           //puntatore alla struttura dati relativa alla tabella hash 
+} dati_capo;                        
 
+//struttura dati relativa ai consumatori (lettori / scrittori)
 typedef struct {
   char **buffer;                    //buffer di stringhe prod/cons
   int *pcindex;                     //primo indice disponibile
@@ -38,17 +38,17 @@ typedef struct {
   pthread_mutex_t *mutexlog;        //mutex per scrivere nel file di log
   FILE *outfile;                    //puntatore al file di output per i lettori
   tabella_hash *dati_tab;           //puntatore alla struttura dati relativa alla tabella hash 
-} dati_consumatori;                 //thread ausiliari
+} dati_consumatori;                 
 
 
 //struttura dati da passare come argomento al thread gestore per gestire i capi e la tabella hash
 typedef struct{
 
-  pthread_t *capo_lettore;                  
-  dati_capo *dati_capo_lettore;
+  pthread_t *capo_lettore;       
+  dati_capo *dati_capo_lettore;     //puntatore alla struttura dati relativa al capo lettore
   pthread_t *capo_scrittore;
-  dati_capo *dati_capo_scrittore;
-  tabella_hash *dati_tab;
+  dati_capo *dati_capo_scrittore;   //puntatore alla struttura dati relativa al capo scrittore
+  tabella_hash *dati_tab;           //puntatore alla struttura dati relativa alla tabella hash
 
 } dati_gestore;
 
@@ -343,12 +343,9 @@ int main(int argc, char *argv[]) {
   tabella_hash dati_tab;
   pthread_cond_t condScrittoriTab, condLettoriTab;
   pthread_mutex_t mutexTab;
-  int lett_tab, dati_agg, scritt_attesa;
-  bool attesa;
+  int lett_tab, dati_agg;
   dati_tab.lettori_tabella=&lett_tab;
   dati_tab.dati_aggiunti=&dati_agg;
-  dati_tab.scrittori_tabella_attesa=&scritt_attesa;
-  dati_tab.scrittori_tabella = &attesa;
   dati_tab.condLtabella = &condLettoriTab;
   dati_tab.condStabella = &condScrittoriTab;
   dati_tab.mutabella = &mutexTab;

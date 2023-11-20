@@ -7,8 +7,6 @@
 typedef struct {
   int *dati_aggiunti;               //numero totale delle stringhe aggiunte alla tabella
   int *lettori_tabella;             //lettori nella tabella 
-  int *scrittori_tabella_attesa;    //scrittori in attesa
-  bool *scrittori_tabella;          //presenza scrittore in tabella
   pthread_mutex_t *mutabella;       //mutex per la tabella hash
   pthread_cond_t *condStabella;     //cv per scrittori
   pthread_cond_t *condLtabella;     //cv per lettori
@@ -33,10 +31,10 @@ void table_init(tabella_hash *tab);
 void table_destroy(tabella_hash *tab);
 
 //funzione che permette al lettore l'accesso alla tabella
-void readtable_lock(tabella_hash *tab);
+//void readtable_lock(tabella_hash *tab);
 
 //funzione che permette ad un lettore di uscire dalla tabella e segnalare la sua uscita
-void readtable_unlock(tabella_hash *tab);
+//void readtable_unlock(tabella_hash *tab);
   
 //funzione che permette ad uno scrittore di accedere alla tabella
 void writetable_lock(tabella_hash *tab);
