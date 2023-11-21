@@ -15,7 +15,9 @@ ENTRY *crea_entry(char *s, int n) {
 
 void distruggi_entry(ENTRY *e)
 {
-  free(e->key); free(e->data); free(e);
+  free(e->key);
+  free(e->data);
+  free(e);
 }
 
 //funzione che aggiunge una entry alla tabella hash
@@ -28,7 +30,7 @@ void aggiungi(char *s, tabella_hash *tab){
     if(r == NULL) xtermina("errore aggiungi o ht piena", __LINE__,__FILE__);
     (*(tab->dati_aggiunti))++;
   }else{
-    assert(strcmp(e->key,r->key)==0); //guardo che sia proprio lei
+    assert(strcmp(e->key,r->key)==0); //guardo che
       int *d = (int *)r->data; //con puntatore cambio valore
       *d +=1;
       distruggi_entry(e); // questa non la devo memorizzare
@@ -60,6 +62,21 @@ void table_init(tabella_hash *tab){
 void table_destroy(tabella_hash *tab){
   xpthread_mutex_destroy(tab->mutabella, __LINE__, __FILE__);
   xpthread_cond_destroy(tab->condStabella, __LINE__, __FILE__);
+}
+
+void readtable_lock(tabella_hash *tab){
+
+  xpthread_mutex_lock(tab->mutabella, __LINE__,__FILE__);
+  (*(tab->lettori_tabella))++;
+  xpthread_mutex_unlock(tab->mutabella, __LINE__,__FILE__);
+}
+
+void readtable_unlock(tabella_hash *tab){
+  assert(*(tab->lettori_tabella)>0);  // ci deve essere almeno un reader (me stesso)
+  xpthread_mutex_lock(tab->mutabella, __LINE__, __FILE__);
+  (*(tab->lettori_tabella))--;                  // cambio di stato       
+  xpthread_cond_broadcast(tab->condStabella,__LINE__, __FILE__);
+  xpthread_mutex_unlock(tab->mutabella,__LINE__,__FILE__);
 }
   
 // accesso tabella da parte di uno scrittore 

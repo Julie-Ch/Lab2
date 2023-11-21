@@ -71,7 +71,9 @@ void *consumer_lett_body(void *arg){
     xsem_post(a->sem_free_slots,__LINE__, __FILE__);
     if(s == NULL) break;
     //entro nella tabella e chiamo la funzione
+    readtable_lock(a->dati_tab);
     t = conta(s);
+    readtable_unlock(a->dati_tab);
     //acquisisco la lock per scrivere sul file
     xpthread_mutex_lock(a->mutexlog, __LINE__, __FILE__);
     fprintf(a->outfile,"stringa: %s, valore di conta: %d\n", s, t);
