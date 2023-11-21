@@ -29,8 +29,10 @@ void table_init(tabella_hash *tab);
 //funzione che distrugge una tabella hash
 void table_destroy(tabella_hash *tab);
 
+//funzione che monitora accesso lettori alla tabella in entrata
 void readtable_lock(tabella_hash *tab);
 
+//funzione che monitora accesso lettori alla tabella in uscita
 void readtable_unlock(tabella_hash *tab);
 
 //funzione che permette ad uno scrittore di accedere alla tabella

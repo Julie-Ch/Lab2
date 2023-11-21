@@ -392,13 +392,13 @@ int main(int argc, char *argv[]) {
   sigfillset(&mask);  // insieme di tutti i segnali
   pthread_sigmask(SIG_BLOCK,&mask,NULL); // blocco tutto 
 
-  //starto thread gestore
+  //faccio partire il thread gestore
   xpthread_create(&gestore, NULL, gestione, &dati, __LINE__, __FILE__);
 
   //aspetto che il gestore termini
   xpthread_join(gestore, NULL, __LINE__, __FILE__);
 
-  printf("stringhe contenute nella tabella: %d\n", *((dati_tab).dati_aggiunti));
+  printf("Stringhe contenute nella tabella: %d\n", *((dati_tab).dati_aggiunti));
 
   //distruggo mutex e cv della tabella
   hdestroy();
