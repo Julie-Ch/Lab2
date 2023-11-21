@@ -184,14 +184,6 @@ void *consumer_scritt_body(void *arg){
     //mutex che gestisce conflitti tra consumatori 
     xpthread_mutex_lock(a->mutex,__LINE__, __FILE__);
     s = (a->buffer[((*(a->pcindex))++) % PC_buffer_len]);
-    //setbuf(stdout, NULL);
-    //fflush(stdout);
-    /*if(s==NULL) {
-      //se sono arrivato in fondo (e leggo il valore di terminazione)
-      xpthread_mutex_unlock(a->mutex,__LINE__, __FILE__);
-      xsem_post(a->sem_free_slots,__LINE__, __FILE__);
-      break;
-    }*/
     xpthread_mutex_unlock(a->mutex,__LINE__, __FILE__);
     xsem_post(a->sem_free_slots,__LINE__, __FILE__);
     if(s==NULL) break;

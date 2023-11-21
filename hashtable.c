@@ -55,13 +55,11 @@ void table_init(tabella_hash *tab){
     *(tab->dati_aggiunti) = 0;
     xpthread_mutex_init(tab->mutabella,NULL,__LINE__,__FILE__);
     xpthread_cond_init(tab->condStabella,NULL,__LINE__,__FILE__);
-    //xpthread_cond_init(tab->condLtabella,NULL,__LINE__,__FILE__);
 }
 
 void table_destroy(tabella_hash *tab){
   xpthread_mutex_destroy(tab->mutabella, __LINE__, __FILE__);
   xpthread_cond_destroy(tab->condStabella, __LINE__, __FILE__);
-  //xpthread_cond_destroy(tab->condLtabella, __LINE__, __FILE__);
 }
   
 // accesso tabella da parte di uno scrittore 
@@ -69,13 +67,12 @@ void writetable_lock(tabella_hash *tab){
 
    xpthread_mutex_lock(tab->mutabella, __LINE__,__FILE__);
     while((*(tab->lettori_tabella)) > 0)
-    // attende fine scrittura o lettura
+    // attende fine lettura
       xpthread_cond_wait(tab->condStabella, tab->mutabella,__LINE__,__FILE__);   
 
 }
 
 // fine accesso della tabella tabella da parte di uno scrittore
 void writetable_unlock(tabella_hash *tab){
-  
   xpthread_mutex_unlock(tab->mutabella,__LINE__,__FILE__);
 }
