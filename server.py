@@ -80,38 +80,45 @@ def main(t, r, w, v):
 def gestisci_connessione(conn, addr, fd_l, fd_s, p): 
   with conn:
     print(f"Server: {threading.current_thread().name} contattato da {addr}")
-    b=1
-    # attendo carattere: tipo di conessione
+    #ricevo carattere che descrive il tipo di conessione
     data = recv_all(conn,1) 
     tipo = struct.unpack("<c", data)[0].decode()
     if tipo == 'A':
-      #invio il carattere inutile
+      #invio il byte di ack
       conn.sendall(b'x')
-      #ricevo la lunghezza dell'input
+      #ricevo la lunghezza dell'input e la riga del file
       data = recv_all(conn,2)
       l = struct.unpack("<h",data)[0]
-      seq = recv_all(conn, l).decode()
+      seq = recv_all(conn, l)
       logging.debug(f"Connessione con {addr} di tipo {tipo}, {l+3} bytes inviati")
       bd = struct.pack("<h", l)
       fd_l.write(bd)
       fd_l.flush()
-      fd_l.write(seq.encode())
+      fd_l.write(seq)
       fd_l.flush()
       print(f"{threading.current_thread().name} finito con {addr}")
     elif tipo == 'B':
-      while(True):    
+      b = 1
+      i = 1
+      while(True):   
+        #invio il byte di ack 
         conn.sendall(b'x')
+        #ricevo la lunghezza dell'input e la riga del file
         data = recv_all(conn,2)
         l = struct.unpack("<h",data)[0]
+        #se il client invia lunghezza = 0, ha finito
         if(l==0):
           break
-        logging.debug(f"Connessione con {addr} di tipo {tipo}, {3+l} bytes inviati") 
-        seq = recv_all(conn, l).decode()
+        seq = recv_all(conn, l)
+        logging.debug(f"Connessione con {addr} di tipo {tipo},{i} riga, {l+3} bytes inviati") 
+        b = b+l+3
+        i = i+1
         bd = struct.pack("<h", l)
         fd_s.write(bd)
         fd_s.flush()
-        fd_s.write(seq.encode())
+        fd_s.write(seq)
         fd_s.flush()
+      logging.debug(f"Connessione terminata con {addr} di tipo {tipo}, {b} bytes inviati totali")
       print(f"{threading.current_thread().name} finito con {addr}")
     else:
       print("tipo di connessione non supportato")
@@ -128,6 +135,7 @@ def recv_all(conn,n):
     bytes_recd = bytes_recd + len(chunk)
   return chunks
 
+#gestione dei parametri (anche opzionali) passati da linea di comando
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=Description, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('t', help='numero max threads', type = int)  
@@ -138,6 +146,7 @@ if __name__ == '__main__':
     assert args.t > 0, "il numero di thread del server deve essere positivo"
     assert args.r > 0, "Il numero di thread lettori dell'archivio deve essere positivo"
     assert args.w > 0, "Il numero di thread scrittori dell'archivio deve essere positivo"
+    
     if args.valgrind:
         main(args.t, args.r, args.w, True)
     else:
