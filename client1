@@ -11,19 +11,22 @@ MAX = 2048
 # creazione del socket per la connessione al server
 def main(file):
   with open(file, mode="r") as f:
+    #per ogni riga del file
     for item in f:
-      #print(f"Mi collego a {HOST} sulla porta {PORT}")
+      #apro una connessione con il server
       with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((HOST, PORT))
         print("Io", s.getsockname(), "sono connesso a", s.getpeername())
+        #invio il carattere che descrive tipo di connessione
         s.sendall(struct.pack("<c", b'A'))
+        #se la riga è più lunga di 2048 byte esco
         if len(item) > MAX:
             print("Sequenza troppo lunga")
             break
-        data = recv_all(s,1)
-        #time.sleep(2)
         print("len: ", len(item))
-        #messo h
+        #ricevo il byte di ack
+        data = recv_all(s,1)
+        #invio lunghezza e riga
         s.sendall(struct.pack("<h", len(item)))
         s.send(item.encode())
         print("Io", s.getsockname(), "ho terminato")
@@ -40,12 +43,9 @@ def recv_all(conn,n):
     bytes_recd = bytes_recd + len(chunk)
   return chunks
 
+
 if len(sys.argv)==2:
   main(sys.argv[1])
 else:
  print("Uso: %s file" % sys.argv[0])
 
-#with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
- #for i in range(2):
-    # attenzione: l'executor non mostra eventuali eccezioni verificate in main() 
- # executor.submit(main, sys.argv[1])

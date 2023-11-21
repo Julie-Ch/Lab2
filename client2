@@ -24,7 +24,7 @@ def main(file):
         if len(item) > MAX:
           print("Sequenza troppo lunga")
           break
-        print("l:",len(item))
+        #print("len: ", len(item))
         #invio la lunghezza e la stringa
         s.sendall(struct.pack("<h",len(item)))
         s.send(item.encode())
