@@ -116,7 +116,7 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p):
     else:
       print("tipo di connessione non supportato")
     
-
+#funzione recv_all come da lezione
 def recv_all(conn,n):
   chunks = b''
   bytes_recd = 0
