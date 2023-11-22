@@ -11,12 +11,16 @@ alla **void *consumer_lett_body(void *arg)** in modo che in una sola struttura h
 consumatore lettore/scrittore.
 
 **tabella_hash** : questa struttura dati serve per la gestione dell'accesso alla tabella hash e per tenere traccia
-del numero totale di dati aggiunti alla tabella
+del numero totale di dati aggiunti alla tabella e dei lettori attualmente in tabella.
 
-## Logica di accesso alla tabella hash con le funzioni conta() e aggiungi()
+## Logica di accesso alla tabella hash
+Alla tabella hash accedono i consumatori lettori e i consumatori scrittori, rispettivamente per chiamare la funzione **conta** e la procedura **aggiungi**.
+Quando un lettore deve chiamare conta, prima chiama **readtable_lock**, in modo che possa incrementare in modo safe il numero di lettori presenti (lettori_tabella). Poi, rilascia subito la lock poichè deve soltanto leggere, e non scrivere, modificando la tabella. 
+Successivamente chiama **readtable_unlock** per decrementare lettori_tabella e per svegliare, se ci sono, scrittori in attesa, che concorreranno per acquisire la lock.
 
-Per quanto riguarda l'accesso alla tabella hash dei lettori non acquisisco nessuna lock, poichè non modificano la tabella.
-Per gli scrittori invece, le due funzioni **void writetable_lock(tabella_hash *tab)** e **void writetable_unlock(tabella_hash *tab)**, 
-permettono accesso concurrent-safe alla tabella e aggiornamento sicuro della variabile condivisa **lettori_tabella** , che
-tiene traccia del numero di lettori nella tabella.
+Quando invece uno scrittore deve chiamare aggiungi, mantiene acquisita la lock(chiamando **writetable_lock**) per tutta la durata del suo accesso, poichè deve modificare la tabella e la variabile **dati_aggiunti**. Chiamando writetable_lock inoltre, lo scrittore aspetta finchè non ci sono più lettori presenti nella tabella, per poi acquisire la lock. Al termine della scrittura, chiamando **writetable_unlock**, esce dalla tabella e rilascia la lock.
+
+
+
+
 
