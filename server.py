@@ -103,7 +103,7 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p):
       while(True):   
         #invio il byte di ack 
         conn.sendall(b'x')
-        #ricevo la lunghezza dell'input e la riga del file
+        #ricevo la lunghezza dell'input e la riga del file (se lunghezza != 0)
         data = recv_all(conn,2)
         l = struct.unpack("<h",data)[0]
         #se il client invia lunghezza = 0, ha finito
@@ -113,6 +113,7 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p):
         logging.debug(f"Connessione con {addr} di tipo {tipo},{i} riga, {l+3} bytes inviati") 
         b = b+l+3
         i = i+1
+        #preparo i dati per inviarli sulla FIFO
         bd = struct.pack("<h", l)
         fd_s.write(bd)
         fd_s.flush()
