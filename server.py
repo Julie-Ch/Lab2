@@ -34,6 +34,8 @@ def main(t, r, w, v):
   #error_file.txt è il file dove andrà output di stderr
   with open('error_file.txt', 'w') as f:
 
+    #esecuzione in background del processo Archivio
+    #start_new_session=True per
     if(v == True):
       p = subprocess.Popen(["valgrind","--leak-check=full", "--track-origins=yes",
       "--show-leak-kinds=all", 

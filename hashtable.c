@@ -1,11 +1,11 @@
 #include "xerrori.h"
 #include "hashtable.h"
 
-//funzione che crea una entry per la tabella hash
+//funzione che crea una entry per la tabella hash key . value
 ENTRY *crea_entry(char *s, int n) {
   ENTRY *e = malloc(sizeof(ENTRY));
   if(e==NULL) xtermina("errore malloc entry 1", __LINE__,__FILE__);
-  e->key = strdup(s); // salva copia di s
+  e->key = strdup(s);  //salva copia di s
   e->data = (int *) malloc(sizeof(int));
   if(e->key==NULL || e->data==NULL)
     termina("errore malloc entry 2");
@@ -13,6 +13,7 @@ ENTRY *crea_entry(char *s, int n) {
   return e;
 }
 
+//funzione che libera la memoria di una entry
 void distruggi_entry(ENTRY *e)
 {
   free(e->key);
@@ -51,6 +52,7 @@ int conta(char *s){
     }
 }
 
+//funzione che inizializza una tabella hash
 void table_init(tabella_hash *tab){
 
     *(tab->lettori_tabella) = 0;
@@ -59,11 +61,13 @@ void table_init(tabella_hash *tab){
     xpthread_cond_init(tab->condStabella,NULL,__LINE__,__FILE__);
 }
 
+//funzione che distrugge mutex e cv di una tabella hash
 void table_destroy(tabella_hash *tab){
   xpthread_mutex_destroy(tab->mutabella, __LINE__, __FILE__);
   xpthread_cond_destroy(tab->condStabella, __LINE__, __FILE__);
 }
 
+//funzione che monitora accesso lettori alla tabella in entrata
 void readtable_lock(tabella_hash *tab){
 
   xpthread_mutex_lock(tab->mutabella, __LINE__,__FILE__);
@@ -71,6 +75,7 @@ void readtable_lock(tabella_hash *tab){
   xpthread_mutex_unlock(tab->mutabella, __LINE__,__FILE__);
 }
 
+//funzione che monitora uscita lettori dalla tabella
 void readtable_unlock(tabella_hash *tab){
   assert(*(tab->lettori_tabella)>0);  // ci deve essere almeno un reader (me stesso)
   xpthread_mutex_lock(tab->mutabella, __LINE__, __FILE__);
@@ -80,7 +85,7 @@ void readtable_unlock(tabella_hash *tab){
   xpthread_mutex_unlock(tab->mutabella,__LINE__,__FILE__);
 }
   
-// accesso tabella da parte di uno scrittore 
+//funzione che permette ad uno scrittore di accedere alla tabella
 void writetable_lock(tabella_hash *tab){
 
    xpthread_mutex_lock(tab->mutabella, __LINE__,__FILE__);
@@ -90,7 +95,7 @@ void writetable_lock(tabella_hash *tab){
 
 }
 
-// fine accesso della tabella tabella da parte di uno scrittore
+//funzione che permette ad uno scrittore di uscire dalla tabellaJum
 void writetable_unlock(tabella_hash *tab){
   xpthread_mutex_unlock(tab->mutabella,__LINE__,__FILE__);
 }

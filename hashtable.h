@@ -7,14 +7,14 @@
 typedef struct {
   int *dati_aggiunti;               //numero totale delle stringhe aggiunte alla tabella
   int *lettori_tabella;             //lettori nella tabella 
-  pthread_mutex_t *mutabella;       //mutex per la tabella hash
+  pthread_mutex_t *mutabella;       //mutex per accesso alla tabella hash e ai dati (sopra)
   pthread_cond_t *condStabella;     //cv per scrittori
 } tabella_hash;
 
 //funzione che crea una entry per la tabella hash
 ENTRY *crea_entry(char *s, int n);
 
-//funzione che distrugge una entry della tabella hash
+//funzione che libera la memoria di una entry
 void distruggi_entry(ENTRY *e);
 
 //funzione che aggiunge una entry alla tabella hash
@@ -26,7 +26,7 @@ int conta(char *s);
 //funzione che inizializza una tabella hash
 void table_init(tabella_hash *tab);
 
-//funzione che distrugge una tabella hash
+//funzione che distrugge mutex e cv di una tabella hash
 void table_destroy(tabella_hash *tab);
 
 //funzione che monitora accesso lettori alla tabella in entrata
