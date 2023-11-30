@@ -1,23 +1,18 @@
 CC=gcc
 CFLAGS=-g -O -Wall -std=c11
-LIBS=-lm -lrt -pthread
-INCLUDES=xerrori.h hashtable.h
-TARGET=Archivio
-OBJS=Archivio.o xerrori.o hashtable.o
+LDLIBS=-lm -lrt -pthread
 
-all: $(TARGET)
+EXEC=Archivio.out
 
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
+all: $(EXEC)
 
-Archivio.o: Archivio.c $(INCLUDES)
-	$(CC) $(CFLAGS) -c Archivio.c
+# regola per la creazioni degli eseguibili utilizzando xerrori.o e hashtable.o
+%.out: %.o xerrori.o hashtable.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-xerrori.o: xerrori.c xerrori.h
-	$(CC) $(CFLAGS) -c xerrori.c
-
-hashtable.o: hashtable.c hashtable.h
-	$(CC) $(CFLAGS) -c hashtable.c
+# regola per la creazione di file oggetto che dipendono da xerrori.h e hashtable.h
+%.o: %.c
+	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm -f *.o $(TARGET)
+	rm -f *.o $(EXEC)
