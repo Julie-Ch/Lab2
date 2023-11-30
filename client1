@@ -16,7 +16,7 @@ def main(file):
       #apro una connessione con il server
       with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((HOST, PORT))
-        print("Io", s.getsockname(), "sono connesso a", s.getpeername())
+        print("Io client1", s.getsockname(), "sono connesso a", s.getpeername())
         #invio il carattere che descrive tipo di connessione
         s.sendall(struct.pack("<c", b'A'))
         #se la riga è più lunga di 2048 byte esco

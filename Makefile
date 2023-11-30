@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-g -O -Wall -std=c99
+CFLAGS=-g -O -Wall -std=c11
 LIBS=-lm -lrt -pthread
 INCLUDES=xerrori.h hashtable.h
 TARGET=Archivio

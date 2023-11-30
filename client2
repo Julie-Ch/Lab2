@@ -14,7 +14,7 @@ def main(file):
   with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     #connessione ad Host via Port 
     s.connect((HOST, PORT))
-    print("Io", s.getsockname(), "sono connesso a", s.getpeername())
+    print("Io client2", s.getsockname(), "sono connesso a", s.getpeername())
     #invio del carattere per il tipo di connessione
     s.sendall(struct.pack("<c",b'B'))
     with open(file, mode="r") as f:
