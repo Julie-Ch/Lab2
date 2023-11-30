@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-g -O -Wall -std=c11
 LDLIBS=-lm -lrt -pthread
 
-EXEC=Archivio.out
+EXEC=archivio.out
 
 all: $(EXEC)
 
