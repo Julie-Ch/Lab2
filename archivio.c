@@ -6,6 +6,7 @@
 #define PC_buffer_len 10            //lunghezza bugger prod/cons
 #define Max_sequence_length 2048    //massima lunghezza sequenza inviata attraverso una pipe
 
+
 pid_t gettid(void)
 {
     #ifdef __linux__
