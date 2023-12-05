@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os, sys, struct, socket, threading, subprocess, datetime, time, signal, logging, argparse, concurrent.futures, pytz
+from threading import Lock
 
 Description ="""Server che gestisce più client nell'accesso ad un archivio"""
 
@@ -44,8 +45,10 @@ def main(t, r, w, v):
     else:   
       p = subprocess.Popen(["./archivio.out", str(r), str(w)], stderr=f, start_new_session=True)
 
-    fd_l = open(Pipe_let, "wb")
-    fd_s = open(Pipe_sc, "wb")
+    #fd_l = open(Pipe_let, "wb")
+    #fd_s = open(Pipe_sc, "wb")
+    fd_l = os.open(Pipe_let, os.O_WRONLY)
+    fd_s = os.open(Pipe_sc, os.O_WRONLY)
 
     pid = os.getpid()
 
@@ -61,25 +64,31 @@ def main(t, r, w, v):
         s.bind((HOST, PORT))
         #socket in ascolto
         s.listen()
+        lock = threading.Lock()
         with concurrent.futures.ThreadPoolExecutor(max_workers=t) as executor:
           while True:
             print("Server: In attesa di un client...")
             #accetto la connessione
             conn, addr = s.accept()
             #e passo al thread la funzione di gestione e i parametri
-            executor.submit(gestisci_connessione, conn, addr, fd_l, fd_s, p)
+            executor.submit(gestisci_connessione, conn, addr, fd_l, fd_s, p, lock)
       #se intercetto una SIGINT la gestisco
       except KeyboardInterrupt:
-        print('Server: Terminazione Server')
-        #chiudo il socket, le FIFO e mando SIGTERM al processo Archivio
-        s.shutdown(socket.SHUT_RDWR)
-        os.unlink(Pipe_let)
-        os.unlink(Pipe_sc)
-        os.kill(p.pid, signal.SIGTERM)
+        pass
+      print('Server: Terminazione Server')
+      #chiudo il socket, le FIFO e mando SIGTERM al processo Archivio
+      os.close(fd_l)
+      os.close(fd_s)
+      s.shutdown(socket.SHUT_RDWR)
+      p.send_signal(signal.SIGTERM)
+    os.unlink(Pipe_let)
+    os.unlink(Pipe_sc)
+        # è brutto
+        #os.kill(p.pid, signal.SIGTERM)
 
 
 # gestisci una singola connessione con un client
-def gestisci_connessione(conn, addr, fd_l, fd_s, p): 
+def gestisci_connessione(conn, addr, fd_l, fd_s, p, lock): 
   with conn:
     print(f"Server: {threading.current_thread().name} contattato da {addr}")
     #ricevo carattere che descrive il tipo di conessione
@@ -87,24 +96,24 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p):
     tipo = struct.unpack("<c", data)[0].decode()
     if tipo == 'A':
       #invio il byte di ack
-      conn.sendall(b'x')
+      #conn.sendall(b'x')
       #ricevo la lunghezza dell'input e la riga del file
       data = recv_all(conn,2)
       l = struct.unpack("<h",data)[0]
       seq = recv_all(conn, l)
       logging.debug(f"Connessione con {addr} di tipo {tipo}, {l+3} bytes inviati")
       bd = struct.pack("<h", l)
-      fd_l.write(bd)
-      fd_l.flush()
-      fd_l.write(seq)
-      fd_l.flush()
+      lock.acquire()
+      os.write(fd_l, bd)
+      #fd_l.flush()
+      os.write(fd_l, seq)
+      #fd_l.flush()
+      lock.release()
       print(f"{threading.current_thread().name} finito con {addr}")
     elif tipo == 'B':
       b = 1
       i = 1
       while(True):   
-        #invio il byte di ack 
-        conn.sendall(b'x')
         #ricevo la lunghezza dell'input e la riga del file (se lunghezza != 0)
         data = recv_all(conn,2)
         l = struct.unpack("<h",data)[0]
@@ -117,10 +126,10 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p):
         i = i+1
         #preparo i dati per inviarli sulla FIFO
         bd = struct.pack("<h", l)
-        fd_s.write(bd)
-        fd_s.flush()
-        fd_s.write(seq)
-        fd_s.flush()
+        lock.acquire()
+        os.write(fd_s, bd)
+        os.write(fd_s, seq)
+        lock.release()
       logging.debug(f"Connessione terminata con {addr} di tipo {tipo}, {b} bytes inviati totali")
       print(f"{threading.current_thread().name} finito con {addr}")
     else:
