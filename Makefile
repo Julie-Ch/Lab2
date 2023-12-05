@@ -7,7 +7,7 @@ EXEC=archivio.out
 all: $(EXEC)
 
 %.out: %.o xerrori.o hashtable.o
-	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	$(CC) $(LDLIBS) -o $@ $^ $(LDLIBS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
