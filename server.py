@@ -133,7 +133,7 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p, lock):
       logging.debug(f"Connessione terminata con {addr} di tipo {tipo}, {b} bytes inviati totali")
       print(f"{threading.current_thread().name} finito con {addr}")
     else:
-      print("tipo di connessione non supportato")
+      print("tipo di connessione non supportato.")
     
 #funzione recv_all come da lezione
 def recv_all(conn,n):
