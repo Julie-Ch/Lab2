@@ -28,13 +28,12 @@ La funzione gestisci_connessione gestisce una singola connessione con un client.
 Il server riceve un byte dal client che descrive il tipo di connessione, che può essere 'A' o 'B'.
 
 Se il tipo di connessione è 'A':
--Invia un byte di conferma/ack al client.
 -Riceve la lunghezza dell’input e la riga del file dal client.
 -Invia questi dati sulla FIFO capolet.
 
 Se il tipo di connessione è 'B':
 -Entra in un ciclo infinito in cui continua a ricevere dati dal client fino a quando non riceve una lunghezza di zero, che indica la fine della trasmissione.
--Per ogni ciclo, invia un byte di conferma/ack al client, riceve la lunghezza dell’input e la riga del file, e invia questi dati sulla FIFO caposc.
+-Per ogni ciclo, riceve la lunghezza dell’input e la riga del file, e invia questi dati sulla FIFO caposc.
 
 Se il tipo di connessione non è né 'A' né 'B', stampa un messaggio che indica che il tipo di connessione non è supportato.
 

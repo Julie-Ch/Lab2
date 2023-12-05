@@ -128,14 +128,19 @@ void *capo_lett_body(void *arg){
 
     //leggo dalla FIFO
     while(true){
-      e  = read(fd,&dim,sizeof(dim));
+    /*e  = read(fd,&dim,sizeof(dim));
       while(e==-1){
         e  = read(fd,&dim,sizeof(dim));
       };
-      if(e==0) break;
+      if(e==0) break;*/
+      e = read(fd,&dim,sizeof(dim));
+      if(e != sizeof(dim)) break;
+      //else if(e!=dim) xtermina("Errore in lettura\n",__LINE__,__FILE__);
       assert(e < Max_sequence_length);
       max = calloc((dim+1),sizeof(char));
+      max[dim] = 0;
       e = read(fd, max, dim*sizeof(char));
+      if(e != dim*sizeof(char)) xtermina("Errore in lettura\n", __LINE__, __FILE__);
       char *p = strtok_r(max,".,:; \n\r\t", &tmp);
 
       //tokenizzo per inserire le stringhe nel buffer
@@ -235,16 +240,21 @@ void *capo_scritt_body(void *arg){
 
   //leggo dalla FIFO
   while(true){
-    e  = read(fd,&dim,sizeof(dim));
+    /*e  = read(fd,&dim,sizeof(dim));
     while(e==-1){
       e  = read(fd,&dim,sizeof(dim));
     };
-    //fflush(stdout);
-
-    if(e==0) break;
+    if(e==0) break;*/
+    e = read(fd,&dim,sizeof(dim));
+    //printf("e: %ld\n", e);
+    //if(e==0) break;
+    //else if(e!=dim) xtermina("Errore in lettura\n",__LINE__,__FILE__);
+    if(e != sizeof(dim)) break;
     assert(e < Max_sequence_length);
     max = calloc((dim+1),sizeof(char));
+    max[dim] = 0;
     e = read(fd, max, dim*sizeof(char));
+    if(e != dim*sizeof(char)) xtermina("Errore in lettura\n", __LINE__, __FILE__);
     char *p = strtok_r(max,".,:; \n\r\t", &tmp);
 
     //tokenizzo per inserire le stringhe nel buffer
@@ -257,7 +267,8 @@ void *capo_scritt_body(void *arg){
     }
     free(max);
   }
-   //terminazione threads consumatori
+
+  //terminazione threads consumatori
   //NULL lo scrivo r volte per ogni consumatore (ogni consumatore elimina quando legge)
   for(int i=0;i<w;i++) {
     //aspetto se non ci sono slot liberi
@@ -273,11 +284,12 @@ void *capo_scritt_body(void *arg){
   }
 
   //chiudo estremità lettura della FIFO
-  xclose(fd,__LINE__, __FILE__); //chiude estremità lettura
+  xclose(fd,__LINE__, __FILE__);
   xsem_destroy(a->sem_data_items,__LINE__, __FILE__);
   xsem_destroy(a->sem_free_slots,__LINE__, __FILE__);
   xpthread_mutex_destroy(&mux_scritt_c, __LINE__, __FILE__);
   //pthread_exit(NULL);
+  //va bene anche return 0
   return (void *) 0;
 
 }

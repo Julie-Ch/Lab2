@@ -19,18 +19,13 @@ def main(file):
     s.sendall(struct.pack("<c",b'B'))
     with open(file, mode="r") as f:
       for item in f:
-        #ricevo il byte di ack
-        data = recv_all(s,1)
         if len(item) > MAX:
           print("Sequenza troppo lunga")
           break
         #invio la lunghezza e la stringa
         s.sendall(struct.pack("<h",len(item)))
-        s.send(item.encode())
-      #ricevo byte di ack
-      data = recv_all(s,1)
-      #ed invio uno 0 per terminare
-      s.sendall(struct.pack("<i",0))
+        s.sendall(item.encode())
+      s.sendall(struct.pack("<h",0))
       print(s.getsockname(), "finito")
 
 #funzione recv_all come da lezione

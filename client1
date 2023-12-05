@@ -23,10 +23,6 @@ def main(file):
         if len(item) > MAX:
             print("Sequenza troppo lunga")
             break
-        #print("len: ", len(item))
-        #ricevo il byte di ack
-        data = recv_all(s,1)
-        #invio lunghezza e riga
         s.sendall(struct.pack("<h", len(item)))
         s.send(item.encode())
         print("Io", s.getsockname(), "ho terminato")
