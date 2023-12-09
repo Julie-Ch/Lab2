@@ -36,7 +36,7 @@ def main(t, r, w, v):
   with open('error_file.txt', 'w') as f:
 
     #esecuzione in background del processo Archivio
-    #start_new_session=True per
+    #start_new_session=True per non far influenzare Archivio dai segnali di server.py (processo padre)
     if(v == True):
       p = subprocess.Popen(["valgrind","--leak-check=full", "--track-origins=yes",
       "--show-leak-kinds=all", 
@@ -45,8 +45,7 @@ def main(t, r, w, v):
     else:   
       p = subprocess.Popen(["./archivio.out", str(r), str(w)], stderr=f, start_new_session=True)
 
-    #fd_l = open(Pipe_let, "wb")
-    #fd_s = open(Pipe_sc, "wb")
+    #apro le FIFO
     fd_l = os.open(Pipe_let, os.O_WRONLY)
     fd_s = os.open(Pipe_sc, os.O_WRONLY)
 
@@ -64,6 +63,7 @@ def main(t, r, w, v):
         s.bind((HOST, PORT))
         #socket in ascolto
         s.listen()
+        #lock per scrivere in modo safe nella FIFO (più thread scrivono sulla solita FIFO)
         lock = threading.Lock()
         with concurrent.futures.ThreadPoolExecutor(max_workers=t) as executor:
           while True:
@@ -76,7 +76,7 @@ def main(t, r, w, v):
       except KeyboardInterrupt:
         pass
       print('Server: Terminazione Server')
-      #chiudo il socket, le FIFO e mando SIGTERM al processo Archivio
+      #chiudo le FIFO, il socket e mando SIGTERM al processo Archivio
       os.close(fd_l)
       os.close(fd_s)
       s.shutdown(socket.SHUT_RDWR)
@@ -95,22 +95,21 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p, lock):
     data = recv_all(conn,1) 
     tipo = struct.unpack("<c", data)[0].decode()
     if tipo == 'A':
-      #invio il byte di ack
-      #conn.sendall(b'x')
       #ricevo la lunghezza dell'input e la riga del file
       data = recv_all(conn,2)
       l = struct.unpack("<h",data)[0]
       seq = recv_all(conn, l)
       logging.debug(f"Connessione con {addr} di tipo {tipo}, {l+3} bytes inviati")
+      #preparo i dati per inviarli sulla FIFO
       bd = struct.pack("<h", l)
+      #acquisisco la lock per scrivere in modo safe sulla FIFO
       lock.acquire()
       os.write(fd_l, bd)
-      #fd_l.flush()
       os.write(fd_l, seq)
-      #fd_l.flush()
       lock.release()
       print(f"{threading.current_thread().name} finito con {addr}")
     elif tipo == 'B':
+      #b = numero byte inviati, i = numero della riga
       b = 1
       i = 1
       while(True):   
@@ -126,6 +125,7 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p, lock):
         i = i+1
         #preparo i dati per inviarli sulla FIFO
         bd = struct.pack("<h", l)
+        #acquisisco la lock per scrivere in modo safe sulla FIFO
         lock.acquire()
         os.write(fd_s, bd)
         os.write(fd_s, seq)

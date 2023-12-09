@@ -45,8 +45,7 @@ Nel main apre il file specificato, legge ogni riga e stabilisce una connessione 
 Per ogni connessione:
 - Invia un byte che indica il tipo di connessione ('A').
 - Controlla se la lunghezza della riga supera il limite massimo (2048 byte). Se la riga è troppo lunga, esce.
-- Riceve un byte di conferma/ack dal server.
-- Invia la lunghezza della riga e la riga stessa al server.
+- Invia la lunghezza della riga e la riga stessa al server sulla FIFO con la lock acquisita, poichè ci sono più thread che potrebbero scrivere sulla FIFO contemporaneamente.
 
 ## Gestione della connessione nel client2
 
@@ -55,8 +54,8 @@ Client2 si connette a un server e invia righe di un file di testo. Il client2 st
 Nel main stabilisce connessione con il server.
 Per ogni connessione:
 - Invia un byte che indica il tipo di connessione ('B').
-- Apre il file e per ogni riga del file, riceve un byte di conferma/ack dal server, controlla se la lunghezza della riga supera il limite massimo (2048 byte), e se la riga non è troppo lunga, invia la lunghezza della riga e la riga stessa al server.
-- Al termine del file, riceve byte di ack, ed invia una lunghezza di 0 per comunicare la fine del file.
+- Apre il file e per ogni riga del file, controlla se la lunghezza della riga supera il limite massimo (2048 byte), e se la riga non è troppo lunga, invia la lunghezza della riga e la riga stessa al server con la lock acquisita, poichè ci sono più thread che potrebbero scrivere sulla FIFO contemporaneamente.
+- Al termine del file, invia una lunghezza di 0 per comunicare la fine del file.
 
 Fuori dal main, viene creato un ThreadPoolExecutor. Il numero massimo di thread nel pool è il numero di file passati come argomento. Itera su ogni argomento passato e per ogni file, sottomette una chiamata alla funzione main, passando il file come parametro. Questo avvia un nuovo thread per ogni file passato come argomento, e ogni thread esegue la funzione main su un file diverso.
 

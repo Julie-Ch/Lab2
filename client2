@@ -22,9 +22,10 @@ def main(file):
         if len(item) > MAX:
           print("Sequenza troppo lunga")
           break
-        #invio la lunghezza e la stringa
+        #invio lunghezza e stringa al server
         s.sendall(struct.pack("<h",len(item)))
         s.sendall(item.encode())
+      #invio lunghezza 0 per comunicare la fine della connessione
       s.sendall(struct.pack("<h",0))
       print(s.getsockname(), "finito")
 
@@ -41,7 +42,7 @@ def recv_all(conn,n):
   return chunks
 
 
-#per ogni file da command line faccio partire un thread che prende quel file come argomento
+#per ogni file passato su command line faccio partire un thread che prende quel file come argomento
 if __name__ == '__main__':
   with concurrent.futures.ThreadPoolExecutor(max_workers=len(sys.argv)-1) as executor:
     for i in range(1, len(sys.argv)):
