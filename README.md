@@ -106,7 +106,7 @@ Per ogni connessione:
 
 ## Gestione della connessione nel client2
 
-**client2** si connette a un server e invia righe di un file di testo. Il client2 stabilisce una connessione di tipo 'B' per ogni file di testo.
+**client2** si connette al server e invia tutte le righe di un file di testo. Il client2 stabilisce una connessione di tipo 'B' per ogni file di testo.
 
 Nel main stabilisce connessione con il server.
 Per ogni connessione:
