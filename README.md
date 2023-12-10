@@ -2,12 +2,12 @@
 
 ## Strutture dati utilizzate all'interno di Archivio.c ed in hashtable.c
 
-**dati_capo**  : questa struttura dati viene passata come argomento alla **capo_lett_body(void *arg)** e alla
-**capo_scritt_body(void *arg)** in modo che in una sola struttura ho tutte le informazioni che riguardano il 
+**dati_capo**  : questa struttura dati viene passata come argomento alla **capo_lett_body** e alla
+**capo_scritt_body** in modo che in una sola struttura ho tutte le informazioni che riguardano il 
 capo lettore/scrittore.
 
-**dati_consumatori** : questa struttura dati viene passata come argomento alla **consumer_lett_body(void *arg)** e 
-alla **consumer_lett_body(void *arg)** in modo che in una sola struttura ho tutte le informazioni che riguardano il 
+**dati_consumatori** : questa struttura dati viene passata come argomento alla **consumer_lett_body** e 
+alla **consumer_lett_body** in modo che in una sola struttura ho tutte le informazioni che riguardano il 
 consumatore lettore/scrittore.
 
 **tabella_hash** : questa struttura dati serve per la gestione dell'accesso alla tabella hash e per tenere traccia
