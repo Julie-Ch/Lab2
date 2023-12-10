@@ -9,13 +9,13 @@ HOST = "127.0.0.1"
 PORT = 59364
 MAX = 2048
 
-#
 timezone = pytz.timezone('Europe/Rome')
 now = datetime.datetime.now(tz = timezone)
 current_time = datetime.datetime.now()
 
 #configurazione del file di log del server
 logging.basicConfig(filename='server.log', 
+                    filemode='w',
                     level=logging.DEBUG, datefmt='%d/%m/%y %H:%M:%S',
                     #data:                lvl logging      msg
                     format='%(asctime)s - %(levelname)s - %(message)s')

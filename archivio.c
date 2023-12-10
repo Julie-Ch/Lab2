@@ -6,7 +6,7 @@
 #define PC_buffer_len 10            //lunghezza bugger prod/cons
 #define Max_sequence_length 2048    //massima lunghezza sequenza inviata attraverso una pipe
 
-
+//funzione gettid come da lezione
 pid_t gettid(void)
 {
     #ifdef __linux__
@@ -82,7 +82,7 @@ void *consumer_lett_body(void *arg){
     free(s);
   } while(true);
 
-  //pthread_exit(NULL); tolto per evitare errori di sistema
+  //pthread_exit(NULL); tolto per evitare errori di sistema su valgrind
   return (void *) 0;
 
 }
@@ -94,11 +94,14 @@ void *capo_lett_body(void *arg){
   FILE* outfile;
   int r = a->aux;
   int cl_index = 0;
+  //mutex per inizializzare la struttura dati
   pthread_mutex_t mux_let_c;
   xpthread_mutex_init(&mux_let_c,NULL,__LINE__,__FILE__);
   pthread_mutex_t mux_log;
   xpthread_mutex_init(&mux_log,NULL,__LINE__,__FILE__);
+  //array per memorizzare i PID dei lettori
   pthread_t lettori[r]; 
+  //array per memorizzare le strutture dei lettori
   dati_consumatori dati_let[r];
   outfile = fopen("lettori.log", "w+");
   if(outfile == NULL) xtermina("errore apertura outfile", __LINE__, __FILE__);
@@ -128,11 +131,6 @@ void *capo_lett_body(void *arg){
 
     //leggo dalla FIFO
     while(true){
-    /*e  = read(fd,&dim,sizeof(dim));
-      while(e==-1){
-        e  = read(fd,&dim,sizeof(dim));
-      };
-      if(e==0) break;*/
       e = read(fd,&dim,sizeof(dim));
       if(e != sizeof(dim)) break;
       //else if(e!=dim) xtermina("Errore in lettura\n",__LINE__,__FILE__);
@@ -174,7 +172,7 @@ void *capo_lett_body(void *arg){
   xpthread_mutex_destroy(&mux_let_c, __LINE__, __FILE__);
   xpthread_mutex_destroy(&mux_log, __LINE__, __FILE__);
 
-  //non uso pthread_exit(NULL); per non far uscire errore di sistema
+  //non uso pthread_exit(NULL); per non far uscire errore di sistema su valgrind
   return (void *) 0;
 }
 
@@ -211,20 +209,22 @@ void *capo_scritt_body(void *arg){
 
   dati_capo *a = (dati_capo*)arg;
   int w = a->aux;
-  int cr_index = 0;
+  int cs_index = 0;
+  //mutex per inizializzare la struttura dati
   pthread_mutex_t mux_scritt_c;
   xpthread_mutex_init(&mux_scritt_c,NULL,__LINE__,__FILE__);
+  //array per memorizzare i PID degli scrittori
   pthread_t scrittori[w]; 
+  //array per memorizzare le strutture degli scrittori
   dati_consumatori dati_sc[w];
 
   //inizializzazione threads scrittori
   for(int i = 0; i < w; i++){
     dati_sc[i].buffer = a->buffer;
-    dati_sc[i].pcindex = &cr_index;
+    dati_sc[i].pcindex = &cs_index;
     dati_sc[i].sem_free_slots = a->sem_free_slots;
     dati_sc[i].sem_data_items = a->sem_data_items;
     dati_sc[i].mutex = &mux_scritt_c;
-    //dati_sc[i].mutexlog = &mux_log;
     dati_sc[i].dati_tab = a->dati_tab;
     xpthread_create(&scrittori[i], NULL, consumer_scritt_body, dati_sc+i, __LINE__, __FILE__);
   }
@@ -240,15 +240,7 @@ void *capo_scritt_body(void *arg){
 
   //leggo dalla FIFO
   while(true){
-    /*e  = read(fd,&dim,sizeof(dim));
-    while(e==-1){
-      e  = read(fd,&dim,sizeof(dim));
-    };
-    if(e==0) break;*/
     e = read(fd,&dim,sizeof(dim));
-    //printf("e: %ld\n", e);
-    //if(e==0) break;
-    //else if(e!=dim) xtermina("Errore in lettura\n",__LINE__,__FILE__);
     if(e != sizeof(dim)) break;
     assert(e < Max_sequence_length);
     max = calloc((dim+1),sizeof(char));
@@ -261,7 +253,6 @@ void *capo_scritt_body(void *arg){
     while(p!=NULL){ 
       xsem_wait((a->sem_free_slots),__LINE__, __FILE__);
       a->buffer[((*(a->ppindex))++) % PC_buffer_len] = strdup(p);
-      //fflush(stdout);
       xsem_post((a->sem_data_items),__LINE__, __FILE__);
       p = strtok_r(NULL,".,:; \n\r\t", &tmp);
     }
@@ -288,7 +279,6 @@ void *capo_scritt_body(void *arg){
   xsem_destroy(a->sem_data_items,__LINE__, __FILE__);
   xsem_destroy(a->sem_free_slots,__LINE__, __FILE__);
   xpthread_mutex_destroy(&mux_scritt_c, __LINE__, __FILE__);
-  //pthread_exit(NULL);
   //va bene anche return 0
   return (void *) 0;
 
