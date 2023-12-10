@@ -17,58 +17,58 @@
 **capo_scritt_body** in modo che in una sola struttura ho tutte le informazioni che riguardano il 
 capo lettore/scrittore.
 
-    ```c
-    typedef struct {
+```c
+typedef struct {
     char **buffer;                    //buffer di stringhe prod/cons
     int *ppindex;                     //primo indice disponibile per produttore
     sem_t *sem_free_slots;            //semaforo per attesa produttore
     sem_t *sem_data_items;            //semaforo per attesa consumatori
     int aux;                          //numero ausiliari
     tabella_hash *dati_tab;           //puntatore alla struttura dati relativa alla tabella hash 
-    } dati_capo;   
-    ```       
+} dati_capo;  
+```       
 
 **dati_consumatori** : questa struttura dati viene passata come argomento alla **consumer_lett_body** e 
 alla **consumer_lett_body** in modo che in una sola struttura ho tutte le informazioni che riguardano il 
 consumatore lettore/scrittore.
 
-    ```c
-    typedef struct {
-    char **buffer;                    //buffer di stringhe prod/cons
-    int *pcindex;                     //primo indice disponibile
-    sem_t *sem_free_slots;            //semaforo per attesa produttore nel buffer
-    sem_t *sem_data_items;            //semaforo per attesa consumatori nel buffer
-    pthread_mutex_t *mutex;           //mutex che gestisce conflitti tra consumatori nel buffer
-    pthread_mutex_t *mutexlog;        //mutex per scrivere nel file di log
-    FILE *outfile;                    //puntatore al file di output per i lettori
-    tabella_hash *dati_tab;           //puntatore alla struttura dati relativa alla tabella hash 
-    } dati_consumatori;   
-    ```
+```c
+typedef struct {
+char **buffer;                    //buffer di stringhe prod/cons
+int *pcindex;                     //primo indice disponibile
+sem_t *sem_free_slots;            //semaforo per attesa produttore nel buffer
+sem_t *sem_data_items;            //semaforo per attesa consumatori nel buffer
+pthread_mutex_t *mutex;           //mutex che gestisce conflitti tra consumatori nel buffer
+pthread_mutex_t *mutexlog;        //mutex per scrivere nel file di log
+FILE *outfile;                    //puntatore al file di output per i lettori
+tabella_hash *dati_tab;           //puntatore alla struttura dati relativa alla tabella hash 
+} dati_consumatori;   
+```
 
 **tabella_hash** : questa struttura dati serve per la gestione dell'accesso alla tabella hash e per tenere traccia
 del numero totale di dati aggiunti alla tabella e dei lettori attualmente in tabella.
 
-    ```c
-    typedef struct {
-    int *dati_aggiunti;               //numero totale delle stringhe aggiunte alla tabella
-    int *lettori_tabella;             //lettori nella tabella 
-    pthread_mutex_t *mutabella;       //mutex per accesso alla tabella hash e ai dati (sopra)
-    pthread_cond_t *condStabella;     //cv per scrittori
-    } tabella_hash;
-    ```
+```c
+typedef struct {
+int *dati_aggiunti;               //numero totale delle stringhe aggiunte alla tabella
+int *lettori_tabella;             //lettori nella tabella 
+pthread_mutex_t *mutabella;       //mutex per accesso alla tabella hash e ai dati (sopra)
+pthread_cond_t *condStabella;     //cv per scrittori
+} tabella_hash;
+```
 **dati_gestore** : questa struttura dati viene passata come argomento a **gestione** in modo che in una sola struttura ho tutte le informazioni che mi servono per gestire i thread capi e i segnali.
 
-    ```c
-    typedef struct{
+```c
+typedef struct{
 
-    pthread_t *capo_lettore;       
-    dati_capo *dati_capo_lettore;     //puntatore alla struttura dati relativa al capo lettore
-    pthread_t *capo_scrittore;
-    dati_capo *dati_capo_scrittore;   //puntatore alla struttura dati relativa al capo scrittore
-    tabella_hash *dati_tab;           //puntatore alla struttura dati relativa alla tabella hash
+pthread_t *capo_lettore;       
+dati_capo *dati_capo_lettore;     //puntatore alla struttura dati relativa al capo lettore
+pthread_t *capo_scrittore;
+dati_capo *dati_capo_scrittore;   //puntatore alla struttura dati relativa al capo scrittore
+tabella_hash *dati_tab;           //puntatore alla struttura dati relativa alla tabella hash
 
-    } dati_gestore;
-    ```
+} dati_gestore;
+```
 
 ## Logica di accesso alla tabella hash
 
