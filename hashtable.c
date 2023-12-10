@@ -68,7 +68,7 @@ void table_destroy(tabella_hash *tab){
 }
 
 //funzione che monitora accesso lettori alla tabella in entrata
-void readtable_lock(tabella_hash *tab){
+void readtable_access(tabella_hash *tab){
 
   xpthread_mutex_lock(tab->mutabella, __LINE__,__FILE__);
   (*(tab->lettori_tabella))++;
@@ -76,7 +76,7 @@ void readtable_lock(tabella_hash *tab){
 }
 
 //funzione che monitora uscita lettori dalla tabella
-void readtable_unlock(tabella_hash *tab){
+void readtable_exit(tabella_hash *tab){
   assert(*(tab->lettori_tabella)>0);  // ci deve essere almeno un reader (me stesso)
   xpthread_mutex_lock(tab->mutabella, __LINE__, __FILE__);
   (*(tab->lettori_tabella))--;                  // cambio di stato

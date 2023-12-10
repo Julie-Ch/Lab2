@@ -30,10 +30,10 @@ void table_init(tabella_hash *tab);
 void table_destroy(tabella_hash *tab);
 
 //funzione che monitora accesso lettori alla tabella in entrata
-void readtable_lock(tabella_hash *tab);
+void readtable_access(tabella_hash *tab);
 
 //funzione che monitora accesso lettori alla tabella in uscita
-void readtable_unlock(tabella_hash *tab);
+void readtable_exit(tabella_hash *tab);
 
 //funzione che permette ad uno scrittore di accedere alla tabella
 void writetable_lock(tabella_hash *tab);

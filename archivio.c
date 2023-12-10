@@ -72,9 +72,9 @@ void *consumer_lett_body(void *arg){
     xsem_post(a->sem_free_slots,__LINE__, __FILE__);
     if(s == NULL) break;
     //entro nella tabella e chiamo la funzione
-    readtable_lock(a->dati_tab);
+    readtable_access(a->dati_tab);
     t = conta(s);
-    readtable_unlock(a->dati_tab);
+    readtable_exit(a->dati_tab);
     //acquisisco la lock per scrivere sul file
     xpthread_mutex_lock(a->mutexlog, __LINE__, __FILE__);
     fprintf(a->outfile,"stringa: %s, valore di conta: %d\n", s, t);
@@ -384,7 +384,6 @@ int main(int argc, char *argv[]) {
   //creo e inizializzo thread gestore
   pthread_t gestore;
   dati_gestore dati;
-
   dati.capo_lettore = &capo_lettore;
   dati.dati_capo_lettore = &dati_capo_lettore;
   dati.capo_scrittore = &capo_scrittore;
