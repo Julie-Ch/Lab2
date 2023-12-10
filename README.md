@@ -89,7 +89,7 @@ Quando invece uno scrittore deve chiamare aggiungi, mantiene acquisita la lock(c
 
 La funzione **gestisci_connessione** gestisce una singola connessione con un client. Questa funzione prende come parametri una connessione, un indirizzo, e tre file descriptors: le due FIFO e il Pid dell'Archivio.
 
-Il server riceve un byte dal client che descrive il tipo di connessione, che può essere 'A' o 'B'.
+Il server riceve un byte dal client che descrive il tipo di connessione, che può essere 'A' o 'B':
 
 - Se il tipo di connessione è 'A':
 -Riceve la lunghezza dell’input e la riga del file dal client.
