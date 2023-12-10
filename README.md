@@ -2,7 +2,7 @@
 
 ## Strutture dati utilizzate all'interno di Archivio.c ed in hashtable.c
 
-**dati_capo**  : questa struttura dati viene passata come argomento alla **void *capo_lett_body(void *arg)** e alla
+> **dati_capo**  : questa struttura dati viene passata come argomento alla **void *capo_lett_body(void *arg)** e alla
 **void *capo_scritt_body(void *arg)** in modo che in una sola struttura ho tutte le informazioni che riguardano il 
 capo lettore/scrittore.
 
