@@ -5,7 +5,7 @@ Description ="""Client2 che riceve N file di testo da riga di comando e
                 per ogni file di testo crea un thread e manda 
                 tutte le linee del file attraverso una connessione di tipo B"""
 
-HOST = "127.0.0.1"  # The server's hostname or IP address
+HOST = "127.0.0.1" 
 PORT = 59364    
 MAX = 2048
 

@@ -6,19 +6,6 @@
 #define PC_buffer_len 10            //lunghezza bugger prod/cons
 #define Max_sequence_length 2048    //massima lunghezza sequenza inviata attraverso una pipe
 
-//funzione gettid come da lezione
-pid_t gettid(void)
-{
-    #ifdef __linux__
-      // il tid è specifico di linux
-    pid_t tid = (pid_t)syscall(SYS_gettid);
-    return tid;
-  #else
-      // per altri OS restituisco -1
-      return -1;
-  #endif
-}
-
 //strutture dati relativa ai capi (lettore / scrittore)
 typedef struct {
   char **buffer;                    //buffer di stringhe prod/cons
@@ -99,7 +86,7 @@ void *capo_lett_body(void *arg){
   xpthread_mutex_init(&mux_let_c,NULL,__LINE__,__FILE__);
   pthread_mutex_t mux_log;
   xpthread_mutex_init(&mux_log,NULL,__LINE__,__FILE__);
-  //array per memorizzare i PID dei lettori
+  //array per memorizzare gli ID dei lettori
   pthread_t lettori[r]; 
   //array per memorizzare le strutture dei lettori
   dati_consumatori dati_let[r];
