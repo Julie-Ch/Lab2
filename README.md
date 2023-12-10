@@ -100,7 +100,7 @@ Il server riceve un byte dal client che descrive il tipo di connessione, che pu�
 -Per ogni iterazione del ciclo, riceve la lunghezza dell’input e la riga del file, e invia questi dati sulla FIFO caposc.
 
 - Se il tipo di connessione non è né 'A' né 'B':
-stampa un messaggio che indica che il tipo di connessione non è supportato.
+-Stampa un messaggio che indica che il tipo di connessione non è supportato.
 
 ## Gestione della connessione nel client1
 
