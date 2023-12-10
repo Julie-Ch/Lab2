@@ -76,11 +76,11 @@ Alla tabella hash accedono i consumatori lettori e i consumatori scrittori, risp
 Quando un lettore deve chiamare conta, prima chiama **readtable_access**, funzione che permette di incrementare in modo safe il numero di lettori presenti (lettori_tabella). Poi, rilascia subito la lock poichè deve soltanto leggere, e non scrivere modificando la tabella. 
 Successivamente chiama **readtable_exit** per decrementare lettori_tabella e per svegliare, se ci sono, scrittori in attesa, che concorreranno per acquisire la lock.
 
-Quando invece uno scrittore deve chiamare aggiungi, mantiene acquisita la lock(chiamando **writetable_lock**) per tutta la durata del suo accesso, poichè deve modificare la tabella e la variabile **dati_aggiunti**. Chiamando writetable_lock inoltre, lo scrittore aspetta finchè non ci sono più lettori presenti nella tabella, per poi acquisire la lock. Al termine della scrittura, chiamando **writetable_unlock**, esce dalla tabella e rilascia la lock.
+Quando invece uno scrittore deve chiamare aggiungi, mantiene acquisita la lock(chiamando **writetable_lock**) per tutta la durata del suo accesso, poichè deve modificare la tabella e la variabile **dati_aggiunti**. Chiamando **writetable_lock** inoltre, lo scrittore aspetta finchè non ci sono più lettori presenti nella tabella (di scrittori ce ne sarà sempre uno solo, quello con la lock acquisita), per poi acquisire la lock. Al termine della scrittura, chiamando **writetable_unlock**, esce dalla tabella e rilascia la lock.
 
 ## Gestione della connesione nel server.py
 
-La funzione gestisci_connessione gestisce una singola connessione con un client. Questa funzione prende come parametri una connessione, un indirizzo, e tre file descriptors: le due FIFO e il Pid dell'Archivio.
+La funzione **gestisci_connessione** gestisce una singola connessione con un client. Questa funzione prende come parametri una connessione, un indirizzo, e tre file descriptors: le due FIFO e il Pid dell'Archivio.
 
 Il server riceve un byte dal client che descrive il tipo di connessione, che può essere 'A' o 'B'.
 
@@ -96,7 +96,7 @@ Se il tipo di connessione non è né 'A' né 'B', stampa un messaggio che indica
 
 ## Gestione della connessione nel client1
 
-Client1 si connette al server ed invia tutte le righe di un file di testo. Il client stabilisce una connessione di tipo 'A' per ogni riga del file.
+**client1** si connette al server ed invia tutte le righe di un file di testo. Il client stabilisce una connessione di tipo 'A' per ogni riga del file.
 
 Nel main apre il file specificato, legge ogni riga e stabilisce una connessione con il server.
 Per ogni connessione:
@@ -106,7 +106,7 @@ Per ogni connessione:
 
 ## Gestione della connessione nel client2
 
-Client2 si connette a un server e invia righe di un file di testo. Il client2 stabilisce una connessione di tipo 'B' per ogni file di testo.
+**client2** si connette a un server e invia righe di un file di testo. Il client2 stabilisce una connessione di tipo 'B' per ogni file di testo.
 
 Nel main stabilisce connessione con il server.
 Per ogni connessione:
