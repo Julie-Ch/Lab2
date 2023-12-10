@@ -16,7 +16,7 @@
 - **error_file.txt** : file dove viene ridiretto lo stderr del server.py 
 - **server.log** : file di log dove vengono monitorate le righe inviate per ogni connessione.
 - **lettori.log** : file dove i lettori scrivono il risultato delle loro interrogazioni all'archivio
-- **valgrind-xxxxxxx** : file di log prodotto dall'esecuzione con valgrind 
+- **valgrind-xxxxxxx** : file di log prodotto dall'esecuzione di archivio con valgrind 
 
 ## Strutture dati utilizzate all'interno di Archivio.c ed in hashtable.c
 
