@@ -2,13 +2,13 @@
 
 ## File che compongono il progetto
 
-- **hashtable.c(hashtable.h)** : collezione di funzioni (e header) per gestire creazione e distruzione di entry, accesso e modifica di una tabella hash
+- **hashtable.c (hashtable.h)** : collezione di funzioni (e header) per gestire creazione e distruzione di entry, accesso e modifica di una tabella hash
 - **archivio.c** : programma C per la gestione dell'archivio
 - **server.py** : programma in Python che implementa il server
 - **client1** : programma in Python che implementa il client1
 - **client2** : programma in Python che implementa il client2
 - **Makefile** : makefile per compilare archivio.c, hashtable.c, xerrori.c
-- **xerrori.c(xerrori.h)** : funzioni come da lezione per gestire gli errori durante le chiamate di funzioni
+- **xerrori.c (xerrori.h)** : collezione di funzioni (e header) come da lezione per gestire gli errori durante le chiamate di funzioni
 - **file1, file2, file3** : file forniti per testare il progetto
 
 ## Strutture dati utilizzate all'interno di Archivio.c ed in hashtable.c
