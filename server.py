@@ -36,7 +36,7 @@ def main(t, r, w, v):
   with open('error_file.txt', 'w') as f:
 
     #esecuzione in background del processo Archivio
-    #start_new_session=True per non far influenzare Archivio dai segnali di server.py (processo padre)
+    #start_new_session=True per non far influenzare archivio dai segnali di server.py (processo padre)
     if(v == True):
       p = subprocess.Popen(["valgrind","--leak-check=full", "--track-origins=yes",
       "--show-leak-kinds=all", 

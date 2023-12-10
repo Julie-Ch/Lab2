@@ -11,6 +11,13 @@
 - **xerrori.c (xerrori.h)** : collezione di funzioni (e header) come da lezione per gestire gli errori durante le chiamate di funzioni
 - **file1, file2, file3** : file forniti per testare il progetto
 
+## File prodotti dall'esecuzione dei programmi
+
+- **error_file.txt** : file dove viene ridiretto lo stderr del server.py 
+- **server.log** : file di log dove vengono monitorate le righe inviate per ogni connessione.
+- **lettori.log** : file dove i lettori scrivono il risultato delle loro interrogazioni all'archivio
+- **valgrind-xxxxxxx** : file di log prodotto dall'esecuzione con valgrind 
+
 ## Strutture dati utilizzate all'interno di Archivio.c ed in hashtable.c
 
 **dati_capo**  : questa struttura dati viene passata come argomento alla **capo_lett_body** e alla
