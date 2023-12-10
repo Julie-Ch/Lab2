@@ -13,10 +13,12 @@
 
 ## File prodotti dall'esecuzione dei programmi
 
-- **error_file.txt** : file dove viene ridiretto lo stderr del server.py 
+- **error_file.txt** : file dove viene ridiretto lo stderr del programma archivio.c. 
 - **server.log** : file di log dove vengono monitorate le righe inviate per ogni connessione.
-- **lettori.log** : file dove i lettori scrivono il risultato delle loro interrogazioni all'archivio
-- **valgrind-xxxxxxx** : file di log prodotto dall'esecuzione di archivio con valgrind 
+- **lettori.log** : file dove i lettori scrivono il risultato delle loro interrogazioni all'archivio.
+- **valgrind-xxxxxxx** : file di log prodotto dall'esecuzione di archivio con valgrind (con "xxxxxxx" PID del processo archivio).
+
+Tutti i file (tranne quello relativo a valgrind) vengono sovrascritti ad ogni esecuzione. Presenteranno quindi solo i dati relativi all'ultima esecuzione. Per quanto riguarda quello relativo a valgrind, ne viene generato uno nuovo ad ogni esecuzione
 
 ## Strutture dati utilizzate all'interno di Archivio.c ed in hashtable.c
 
