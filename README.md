@@ -23,7 +23,7 @@ typedef struct {
     int *ppindex;                     //primo indice disponibile per produttore
     sem_t *sem_free_slots;            //semaforo per attesa produttore
     sem_t *sem_data_items;            //semaforo per attesa consumatori
-    int aux;                          //numero ausiliari
+    int aux;                          //numero dei thread ausiliari
     tabella_hash *dati_tab;           //puntatore alla struttura dati relativa alla tabella hash 
 } dati_capo;  
 ```       
@@ -35,12 +35,12 @@ consumatore lettore/scrittore.
 ```c
 typedef struct {
 char **buffer;                    //buffer di stringhe prod/cons
-int *pcindex;                     //primo indice disponibile
+int *pcindex;                     //primo indice disponibile per i consumatori
 sem_t *sem_free_slots;            //semaforo per attesa produttore nel buffer
 sem_t *sem_data_items;            //semaforo per attesa consumatori nel buffer
 pthread_mutex_t *mutex;           //mutex che gestisce conflitti tra consumatori nel buffer
 pthread_mutex_t *mutexlog;        //mutex per scrivere nel file di log
-FILE *outfile;                    //puntatore al file di output per i lettori
+FILE *outfile;                    //puntatore al file di log per i lettori
 tabella_hash *dati_tab;           //puntatore alla struttura dati relativa alla tabella hash 
 } dati_consumatori;   
 ```
