@@ -41,9 +41,9 @@ def main(t, r, w, v):
       p = subprocess.Popen(["valgrind","--leak-check=full", "--track-origins=yes",
       "--show-leak-kinds=all", 
       "--log-file=valgrind-%p.log", "-s",
-      "./archivio.out", str(r), str(w)], stderr=f, start_new_session=True)
+      "./archivio", str(r), str(w)], stderr=f, start_new_session=True)
     else:   
-      p = subprocess.Popen(["./archivio.out", str(r), str(w)], stderr=f, start_new_session=True)
+      p = subprocess.Popen(["./archivio", str(r), str(w)], stderr=f, start_new_session=True)
 
     #apro le FIFO
     fd_l = os.open(Pipe_let, os.O_WRONLY)
