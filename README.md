@@ -126,6 +126,27 @@ Per ogni connessione:
 
 Fuori dal main, viene creato un ThreadPoolExecutor. Il numero massimo di thread nel pool è il numero di file passati come argomento. Itera su ogni argomento passato e per ogni file, sottomette una chiamata alla funzione main, passando il file come parametro. Questo avvia un nuovo thread per ogni file passato come argomento, e ogni thread esegue la funzione main su un file diverso.
 
+## Funzionamento programma archivio.c
+
+Il programma **archivio** utilizza un modello produttore-consumatori multi-thread. Dal server arrivano le stringhe: se sono stringhe "da leggere", quindi su cui chiamare la funzione conta, il server le invia sulla FIFO capolet, se sono stringhe da inserire nella tabella le invia sulla FIFO caposc. 
+
+Nel main, dopo aver inizializzato le varie strutture dati per gestire i capi, la tabella hash e il gestore dei segnali, fa partire i capi ed il gestore, attendendo la terminazione del gestore.
+
+I capi lettori eseguono sostanzialmente le solite operazioni:
+
+- Bloccano tutti i segnali per consentire solo al gestore di gestirle. Poi, estrae i dati dal parametro arg e inizializza vari mutex e array per i thread ausiliari.
+
+- Vengono creati i thread ausiliari, ognuno dei quali ha la sua struttura dati (vedere **dati_consumatore**)
+
+- Viene aperta una FIFO in sola lettura e comincia la lettura. Itera nel ciclo finche la FIFO non viene chiusa in scrittura dal server. Leggo un intero **dim** e una stringa **max** lunga dim. Per ogni stringa tokenizzata, il produttore, con una wait su **a->sem_free_slots**, aspetta che ci siano slot liberi per inserire un elemento e dopo aver scritto, segnala con una post su **a->sem_data_items** la presenza di elementi nel buffer. Simmetricamente, il consumatore aspetta con una wait su **a->sem_data_items**che ci sia almeno un elemento da prelevare ma, essendoci tanti consumatori, acquisisce anche la lock del buffer prima di scriverci. Successivamente segnala uno slot libero con una post su **a->sem_free_slots**.
+
+- Quando la FIFO viene chiusa, viene scritto NULL nel buffer per ogni thread consumatore per segnalare che non ci sono più dati da consumare e si attende che tutti i thread lettori terminino.
+
+Per cercare di rendere il gestore quanto più async-signal-safe, il thread entra in un ciclo e fa una sigwait attendendo i segnali. Successivamente gestisce SIGINT e SIGTERM convertendo l'intero (letto dalla tabella con la lock) in stringa e la scrive su stdout/stderr usando una write(safe).
+Dopo che il segnale SIGTERM interrompe il ciclo, il thread gestore esegue pthread_join per attendere la terminazione dei thread capo_lettore e capo_scrittore.
+La pthread_join, che non è asyn-signal-safe, viene fatta fuori dal ciclo di gestione dei segnali in modo da garantire la async-safety.
+Ho usato una perror(che non è safe) solo per eliminare il warning del controllo sul valore restituito dalla write e poichè è improbabile avere errori della write su stderr e stdout per una stringa così corta.
+
 
 
 
