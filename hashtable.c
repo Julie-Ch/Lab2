@@ -101,7 +101,7 @@ void writetable_lock(tabella_hash *tab){
 
 }
 
-//funzione che permette ad uno scrittore consumatore di uscire dalla tabella
+//funzione che permette ad uno scrittore consumatore di uscire dalla tabellaqqqq
 void writetable_unlock(tabella_hash *tab){
   xpthread_mutex_unlock(tab->mutabella,__LINE__,__FILE__);
 }
