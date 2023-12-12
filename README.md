@@ -132,7 +132,7 @@ Il programma **archivio** utilizza un modello produttore-consumatori multi-threa
 
 Nel main, dopo aver inizializzato le varie strutture dati per gestire i capi, la tabella hash e il gestore dei segnali, fa partire i capi ed il gestore, attendendo la terminazione del gestore.
 
-I capi lettori eseguono sostanzialmente le solite operazioni:
+I capi eseguono sostanzialmente le solite operazioni:
 
 - Bloccano tutti i segnali per consentire solo al gestore di gestirle. Poi, estrae i dati dal parametro arg e inizializza vari mutex e array per i thread ausiliari.
 
