@@ -1,7 +1,7 @@
 #include "xerrori.h"
 #include "hashtable.h"
 
-//funzione che crea una entry per la tabella hash key . value
+//funzione che crea una entry per la tabella hash key - value
 ENTRY *crea_entry(char *s, int n) {
   ENTRY *e = malloc(sizeof(ENTRY));
   if(e==NULL) xtermina("errore malloc entry 1", __LINE__,__FILE__);
@@ -31,7 +31,7 @@ void aggiungi(char *s, tabella_hash *tab){
     if(r == NULL) xtermina("errore aggiungi o ht piena", __LINE__,__FILE__);
     (*(tab->dati_aggiunti))++;
   }else{
-    assert(strcmp(e->key,r->key)==0); //guardo che
+    assert(strcmp(e->key,r->key)==0); //controllo se la entry esiste davvero
       int *d = (int *)r->data; //con puntatore cambio valore
       *d +=1;
       distruggi_entry(e); // questa non la devo memorizzare
@@ -41,12 +41,15 @@ void aggiungi(char *s, tabella_hash *tab){
 //funzione che restituisce valore associato ad una entry nella tabella hash
 int conta(char *s){
 
+  //creo una entry per poter usare la funzione hsearch con FIND
   ENTRY *e = crea_entry(s, 1);
   ENTRY *r = hsearch(*e, FIND);
   if(r == NULL) {
+    //se non la trovo ritorno 0 e distruggo la entry
     distruggi_entry(e);
     return 0;
     }else{
+    //altirmenti ritorno il valore associato e distruggo la entry
     distruggi_entry(e);
     return (*((int *)r->data));
     }
@@ -67,17 +70,19 @@ void table_destroy(tabella_hash *tab){
   xpthread_cond_destroy(tab->condStabella, __LINE__, __FILE__);
 }
 
-//funzione che monitora accesso lettori alla tabella in entrata
+//funzione che monitora accesso lettori consumatori alla tabella in entrata
 void readtable_access(tabella_hash *tab){
 
+  //per modificare il numero di lettori nella tabella acquisisco la lock
   xpthread_mutex_lock(tab->mutabella, __LINE__,__FILE__);
   (*(tab->lettori_tabella))++;
   xpthread_mutex_unlock(tab->mutabella, __LINE__,__FILE__);
 }
 
-//funzione che monitora uscita lettori dalla tabella
+//funzione che monitora uscita lettori consumatori dalla tabella
 void readtable_exit(tabella_hash *tab){
   assert(*(tab->lettori_tabella)>0);  // ci deve essere almeno un reader (me stesso)
+  //per modificare il numero di lettori nella tabella acquisisco la lock
   xpthread_mutex_lock(tab->mutabella, __LINE__, __FILE__);
   (*(tab->lettori_tabella))--;                  // cambio di stato
   //se ci sono scrittori in attesa, li sveglio       
@@ -85,17 +90,18 @@ void readtable_exit(tabella_hash *tab){
   xpthread_mutex_unlock(tab->mutabella,__LINE__,__FILE__);
 }
   
-//funzione che permette ad uno scrittore di accedere alla tabella
+//funzione che permette ad uno scrittore consumatore di accedere alla tabella
 void writetable_lock(tabella_hash *tab){
 
+    //per leggere il numero di lettori nella tabella acquisisco la lock
    xpthread_mutex_lock(tab->mutabella, __LINE__,__FILE__);
     while((*(tab->lettori_tabella)) > 0)
-    // attende fine lettura
+      //attende che tutti i lettori abbiano finito di leggere
       xpthread_cond_wait(tab->condStabella, tab->mutabella,__LINE__,__FILE__);   
 
 }
 
-//funzione che permette ad uno scrittore di uscire dalla tabellaJum
+//funzione che permette ad uno scrittore consumatore di uscire dalla tabella
 void writetable_unlock(tabella_hash *tab){
   xpthread_mutex_unlock(tab->mutabella,__LINE__,__FILE__);
 }

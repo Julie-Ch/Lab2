@@ -83,8 +83,6 @@ def main(t, r, w, v):
       p.send_signal(signal.SIGTERM)
     os.unlink(Pipe_let)
     os.unlink(Pipe_sc)
-        # è brutto
-        #os.kill(p.pid, signal.SIGTERM)
 
 
 # gestisci una singola connessione con un client
