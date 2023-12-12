@@ -68,14 +68,11 @@ pthread_cond_t *condStabella;     //cv per scrittori
 **dati_gestore** : questa struttura dati viene passata come argomento a **gestione** in modo che in una sola struttura ho tutte le informazioni che mi servono per gestire i thread capi e i segnali.
 
 ```c
+//struttura dati da passare come argomento al thread gestore per gestire i capi e la tabella hash
 typedef struct{
-
-pthread_t *capo_lettore;       
-dati_capo *dati_capo_lettore;     //puntatore alla struttura dati relativa al capo lettore
-pthread_t *capo_scrittore;
-dati_capo *dati_capo_scrittore;   //puntatore alla struttura dati relativa al capo scrittore
-tabella_hash *dati_tab;           //puntatore alla struttura dati relativa alla tabella hash
-
+  pthread_t *capo_lettore;          //ID del thread capo_lettore per fare la join
+  pthread_t *capo_scrittore;        //ID del thread capo_scrittore per fare la join
+  tabella_hash *dati_tab;           //puntatore alla struttura dati relativa alla tabella hash
 } dati_gestore;
 ```
 
