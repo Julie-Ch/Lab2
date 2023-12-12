@@ -76,14 +76,6 @@ typedef struct{
 } dati_gestore;
 ```
 
-## Logica di accesso alla tabella hash
-
-Alla tabella hash accedono i consumatori lettori e i consumatori scrittori, rispettivamente per chiamare la funzione **conta** e la procedura **aggiungi**.
-Quando un lettore deve chiamare conta, prima chiama **readtable_access**, funzione che permette di incrementare in modo safe il numero di lettori presenti (lettori_tabella). Poi, rilascia subito la lock poichè deve soltanto leggere, e non scrivere modificando la tabella. 
-Successivamente chiama **readtable_exit** per decrementare lettori_tabella e per svegliare, se ci sono, scrittori in attesa, che concorreranno per acquisire la lock.
-
-Quando invece uno scrittore deve chiamare aggiungi, mantiene acquisita la lock(chiamando **writetable_lock**) per tutta la durata del suo accesso, poichè deve modificare la tabella e la variabile **dati_aggiunti**. Chiamando **writetable_lock** inoltre, lo scrittore aspetta finchè non ci sono più lettori presenti nella tabella (di scrittori ce ne sarà sempre uno solo, quello con la lock acquisita), per poi acquisire la lock. Al termine della scrittura, chiamando **writetable_unlock**, esce dalla tabella e rilascia la lock.
-
 ## Gestione della connesione nel server.py
 
 La funzione **gestisci_connessione** gestisce una singola connessione con un client. Questa funzione prende come parametri una connessione, un indirizzo, e tre file descriptors: le due FIFO e il Pid dell'archivio.
@@ -123,7 +115,7 @@ Per ogni connessione:
 
 Fuori dal main, viene creato un ThreadPoolExecutor. Il numero massimo di thread nel pool è il numero di file passati come argomento. Itera su ogni argomento passato e per ogni file, sottomette una chiamata alla funzione main, passando il file come parametro. Questo avvia un nuovo thread per ogni file passato come argomento, e ogni thread esegue la funzione main su un file diverso.
 
-## Funzionamento programma archivio.c
+## archivio.c
 
 Il programma **archivio** utilizza un modello produttore-consumatori multi-thread. Dal server arrivano le stringhe: se sono stringhe "da leggere", quindi su cui chiamare la funzione conta, il server le invia sulla FIFO capolet, se sono stringhe da inserire nella tabella le invia sulla FIFO caposc. 
 
@@ -144,6 +136,14 @@ Per cercare di rendere il gestore quanto più async-signal-safe, il thread entra
 Dopo che il segnale SIGTERM interrompe il ciclo, il thread gestore esegue pthread_join per attendere la terminazione dei thread capo_lettore e capo_scrittore.
 La pthread_join, che non è asyn-signal-safe, viene fatta fuori dal ciclo di gestione dei segnali in modo da garantire la async-safety.
 Ho usato una perror(che non è safe) solo per eliminare il warning del controllo sul valore restituito dalla write e poichè è improbabile avere errori della write su stderr e stdout per una stringa così corta.
+
+## Logica di accesso alla tabella hash
+
+Alla tabella hash accedono i consumatori lettori e i consumatori scrittori, rispettivamente per chiamare la funzione **conta** e la procedura **aggiungi**.
+Quando un lettore deve chiamare conta, prima chiama **readtable_access**, funzione che permette di incrementare in modo safe il numero di lettori presenti (lettori_tabella). Poi, rilascia subito la lock poichè deve soltanto leggere, e non scrivere modificando la tabella. 
+Successivamente chiama **readtable_exit** per decrementare lettori_tabella e per svegliare, se ci sono, scrittori in attesa, che concorreranno per acquisire la lock.
+
+Quando invece uno scrittore deve chiamare aggiungi, mantiene acquisita la lock(chiamando **writetable_lock**) per tutta la durata del suo accesso, poichè deve modificare la tabella e la variabile **dati_aggiunti**. Chiamando **writetable_lock** inoltre, lo scrittore aspetta finchè non ci sono più lettori presenti nella tabella (di scrittori ce ne sarà sempre uno solo, quello con la lock acquisita), per poi acquisire la lock. Al termine della scrittura, chiamando **writetable_unlock**, esce dalla tabella e rilascia la lock.
 
 
 
