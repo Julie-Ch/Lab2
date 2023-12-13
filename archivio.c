@@ -343,12 +343,10 @@ int main(int argc, char *argv[]) {
   pthread_cond_t condScrittoriTab;
   pthread_mutex_t mutexTab;
   int lett_tab, dati_agg;
-  bool scritt_tab;
   dati_tab.lettori_tabella=&lett_tab;
   dati_tab.dati_aggiunti=&dati_agg;
   dati_tab.condStabella = &condScrittoriTab;
   dati_tab.mutabella = &mutexTab;
-  dati_tab.writing = &scritt_tab;
   table_init(&dati_tab);
   
 
