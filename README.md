@@ -117,17 +117,17 @@ Fuori dal main, viene creato un ThreadPoolExecutor. Il numero massimo di thread 
 
 ## archivio.c
 
-Il programma **archivio** utilizza un modello produttore-consumatori multi-thread. Dal server arrivano le stringhe: se sono stringhe "da leggere", quindi su cui chiamare la funzione conta, il server le invia sulla FIFO capolet, se sono stringhe da inserire nella tabella le invia sulla FIFO caposc. 
+Il programma **archivio** utilizza un modello produttore-consumatori multi-thread, con produttore il capo e come consumatori i thread ausiliari. Dal server arrivano le stringhe: se sono stringhe "da leggere", quindi su cui chiamare la funzione conta, il server le invia sulla FIFO capolet (al capo lettore), se sono stringhe da inserire nella tabella le invia sulla FIFO caposc (al capo scrittore). 
 
-Nel main, dopo aver inizializzato le varie strutture dati per gestire i capi, la tabella hash e il gestore dei segnali, fa partire i capi ed il gestore, attendendo la terminazione del gestore.
+Nel main, dopo aver inizializzato le varie strutture dati per gestire i capi, la tabella hash e il gestore dei segnali, fa partire i capi ed il gestore, attendendo la terminazione del gestore. Blocca inoltre tutti i segnali per consentire solo al gestore di gestirle.
 
-I capi eseguono sostanzialmente le solite operazioni:
+Ognuno dei capi esegue sostanzialmente le solite operazioni:
 
-- Bloccano tutti i segnali per consentire solo al gestore di gestirle. Poi, estrae i dati dal parametro arg e inizializza vari mutex e array per i thread ausiliari.
+- Estrae i dati dal parametro arg e inizializza vari mutex e array per i thread consumatori ausiliari.
 
 - Vengono creati i thread consumatori ausiliari, ognuno dei quali ha la sua struttura dati (vedere **dati_consumatore**)
 
-- Viene aperta una FIFO in sola lettura e comincia la lettura. Itera nel ciclo finche la FIFO non viene chiusa in scrittura dal server. Leggo un intero **dim** e una stringa **max** lunga dim. Per ogni stringa tokenizzata, il produttore, con una wait su **a->sem_free_slots**, aspetta che ci siano slot liberi per inserire un elemento e dopo aver scritto, segnala con una post su **a->sem_data_items** la presenza di elementi nel buffer. Simmetricamente, il consumatore aspetta con una wait su **a->sem_data_items**che ci sia almeno un elemento da prelevare ma, essendoci tanti consumatori, acquisisce anche la lock del buffer prima di scriverci. Successivamente segnala uno slot libero con una post su **a->sem_free_slots**.
+- Viene aperta una FIFO in sola lettura e comincia la lettura. Itera nel ciclo finche la FIFO non viene chiusa in scrittura dal server. Leggo un intero **dim** e una stringa **max** lunga dim. Poi, per ogni stringa tokenizzata, il produttore, con una wait su **a->sem_free_slots**, aspetta che ci siano slot liberi per inserire un elemento e dopo aver scritto, segnala con una post su **a->sem_data_items** la presenza di elementi nel buffer. Simmetricamente, i consumatori aspettano con una wait su **a->sem_data_items**che ci sia almeno un elemento da prelevare ma, essendoci tanti consumatori, acquisisce anche la lock del buffer prima di scriverci. Successivamente segnala uno slot libero con una post su **a->sem_free_slots**.
 
 - Quando la FIFO viene chiusa, viene scritto NULL nel buffer per ogni thread consumatore per segnalare che non ci sono più dati da consumare e si attende che tutti i thread lettori terminino.
 
