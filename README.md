@@ -132,18 +132,14 @@ I capi eseguono sostanzialmente le solite operazioni:
 - Quando la FIFO viene chiusa, viene scritto NULL nel buffer per ogni thread consumatore per segnalare che non ci sono più dati da consumare e si attende che tutti i thread lettori terminino.
 
 Nel main e negli altri thread blocco tutti i segnali, per far sì che sia il thread gestore a gestirli.
-Per cercare di rendere il gestore quanto più async-signal-safe, il thread entra in un ciclo e fa una sigwait attendendo i segnali. Successivamente gestisce SIGINT e SIGTERM convertendo l'intero (letto dalla tabella con la lock) in stringa e la scrive su stdout/stderr usando una write(async-signal-safe).
-Dopo che il segnale SIGTERM interrompe il ciclo, il thread gestore esegue pthread_join per attendere la terminazione dei thread capo_lettore e capo_scrittore.
-La pthread_join, che non è asyn-signal-safe, viene fatta fuori dal ciclo di gestione dei segnali in modo da garantire la async-safety.
-Ho usato una perror(che non è safe) solo per eliminare il warning del controllo sul valore restituito dalla write e poichè è improbabile avere errori della write su stderr e stdout per una stringa così corta.
+Il thread gestore creato nel main, entra in un ciclo e fa una sigwait attendendo i segnali. Dato che sigwait è bloccante, non è necessario rendere async-safe il corpo del gestore. Successivamente gestisce SIGINT e SIGTERM.
+Dopo che il segnale SIGTERM interrompe il ciclo, il thread gestore esegue pthread_join per attendere la terminazione dei thread capo_lettore e capo_scrittore e ritorna al main.
 
 ## Logica di accesso alla tabella hash
 
-Alla tabella hash accedono i consumatori lettori e i consumatori scrittori, rispettivamente per chiamare la funzione **conta** e la procedura **aggiungi**.
-Quando un lettore deve chiamare conta, prima chiama **readtable_access**, funzione che permette di incrementare in modo safe il numero di lettori presenti (lettori_tabella). Poi, rilascia subito la lock poichè deve soltanto leggere, e non scrivere modificando la tabella. 
-Successivamente chiama **readtable_exit** per decrementare lettori_tabella e per svegliare, se ci sono, scrittori in attesa, che concorreranno per acquisire la lock.
+Alla tabella hash accedono i consumatori lettori e i consumatori scrittori, rispettivamente per chiamare la funzione conta e la procedura aggiungi. Quando un lettore deve chiamare conta, prima chiama **readtable_access**, funzione che permette di incrementare in modo safe il numero di lettori presenti (**lettori_tabella**) acquisendo la lock. Se la lock è acquisita dallo scrittore (che la acquisirà per tutta la durata della scrittura). Poi, rilascia subito la lock poichè deve soltanto leggere, e non scrivere modificando la tabella. Successivamente chiama **readtable_exit** per decrementare lettori_tabella e per svegliare, se ci sono, scrittori in attesa, che concorreranno per acquisire la lock.
 
-Quando invece uno scrittore deve chiamare aggiungi, mantiene acquisita la lock(chiamando **writetable_lock**) per tutta la durata del suo accesso, poichè deve modificare la tabella e la variabile **dati_aggiunti**. Chiamando **writetable_lock** inoltre, lo scrittore aspetta finchè non ci sono più lettori presenti nella tabella (di scrittori ce ne sarà sempre uno solo, quello con la lock acquisita), per poi acquisire la lock. Al termine della scrittura, chiamando **writetable_unlock**, esce dalla tabella e rilascia la lock.
+Quando invece uno scrittore deve chiamare aggiungi, mantiene acquisita la lock(chiamando **writetable_lock**) per tutta la durata del suo accesso, poichè deve modificare la tabella e la variabile dati_aggiunti. Chiamando **writetable_lock** inoltre, lo scrittore aspetta finchè non ci sono più lettori presenti nella tabella (di scrittori ce ne sarà sempre uno solo, quello con la lock acquisita), per poi acquisire la lock. Al termine della scrittura, chiamando **writetable_unlock**, esce dalla tabella e rilascia la lock.
 
 
 

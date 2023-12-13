@@ -282,59 +282,40 @@ void *capo_scritt_body(void *arg){
 
 }
 
-void* handler(void* arg) {
+void* gestore_body(void* arg) {
 
-    sigset_t set;
-    int sig;
+  sigset_t set;
+  sigfillset(&set);
 
-    dati_gestore *d = (dati_gestore*) arg;
+  int sig;
 
-    sigfillset(&set);
-    // Sblocca tutti i segnali
-    pthread_sigmask(SIG_UNBLOCK, &set, NULL);
-    char buf[16] = {0};
+  dati_gestore *d = (dati_gestore*) arg;
 
-    while(1) {
+  while(1) {
 
-        // Aspetta i segnali 
-        sigwait(&set, &sig);
+      // Aspetta i segnali 
+      sigwait(&set, &sig);
 
-        if(sig == SIGINT) {
-            xpthread_mutex_lock(d->dati_tab->mutabella, __LINE__, __FILE__);
-            int val = *((d->dati_tab)->dati_aggiunti);
-            xpthread_mutex_unlock(d->dati_tab->mutabella, __LINE__, __FILE__);
-            int len = 14;
-            buf[15] = '\0'; 
-            int e;
-            do {
-                buf[len--] = '0' + (val % 10); 
-                val /= 10;
-            } while(val != 0);
-            e = write(STDERR_FILENO, buf + len + 1, 14 - len);
-            if(e == -1) perror("Errore write");
-        }
-        if(sig == SIGTERM) {
-            xpthread_mutex_lock(d->dati_tab->mutabella, __LINE__, __FILE__);
-            int val = *((d->dati_tab)->dati_aggiunti);
-            xpthread_mutex_unlock(d->dati_tab->mutabella, __LINE__, __FILE__);
-            int len = 14;
-            buf[15] = '\0'; 
-            int e;
-            do {
-                buf[len--] = '0' + (val % 10); 
-                val /= 10;
-            } while(val != 0);
-            e = write(STDOUT_FILENO, buf + len + 1, 14 - len);
-            if(e == -1) perror("Errore write");
-            break;
-        }
-    }
+      if(sig == SIGINT) {
+          xpthread_mutex_lock(d->dati_tab->mutabella, __LINE__, __FILE__);
+          int val = *((d->dati_tab)->dati_aggiunti);
+          xpthread_mutex_unlock(d->dati_tab->mutabella, __LINE__, __FILE__);
+          fprintf(stderr, "Stringhe contenute nella tabella: %d\n", val);
+      }
+      if(sig == SIGTERM) {
+          xpthread_mutex_lock(d->dati_tab->mutabella, __LINE__, __FILE__);
+          int val = *((d->dati_tab)->dati_aggiunti);
+          xpthread_mutex_unlock(d->dati_tab->mutabella, __LINE__, __FILE__);
+          fprintf(stdout, "Stringhe contenute nella tabella: %d\n", val);
+          break;
+      }
+  }
 
-    // Dopo SIGTERM attende la terminazione dei capi
-    xpthread_join(*(d->capo_lettore), NULL, __LINE__, __FILE__);
-    xpthread_join(*(d->capo_scrittore), NULL, __LINE__, __FILE__);
-    
-    return NULL;
+  // Dopo SIGTERM e fuori dal ciclo di gestione attende la terminazione dei capi
+  xpthread_join(*(d->capo_lettore), NULL, __LINE__, __FILE__);
+  xpthread_join(*(d->capo_scrittore), NULL, __LINE__, __FILE__);
+  
+  return NULL;
 }
 
 
@@ -362,10 +343,12 @@ int main(int argc, char *argv[]) {
   pthread_cond_t condScrittoriTab;
   pthread_mutex_t mutexTab;
   int lett_tab, dati_agg;
+  bool scritt_tab;
   dati_tab.lettori_tabella=&lett_tab;
   dati_tab.dati_aggiunti=&dati_agg;
   dati_tab.condStabella = &condScrittoriTab;
   dati_tab.mutabella = &mutexTab;
+  dati_tab.writing = &scritt_tab;
   table_init(&dati_tab);
   
 
@@ -403,11 +386,10 @@ int main(int argc, char *argv[]) {
   dati_capo_scrittore.aux = w;
   dati_capo_scrittore.dati_tab = &dati_tab;
 
-  sigset_t set;
-
-  //il main e gli altri thread (tranne il gestore) non devono ricevere i segnali
-  sigfillset(&set);
-  pthread_sigmask(SIG_BLOCK, &set, NULL);
+  
+  sigset_t mask;
+  sigfillset(&mask);  // insieme di tutti i segnali
+  pthread_sigmask(SIG_BLOCK,&mask,NULL); // blocco tutto 
 
   pthread_t gestore;
   //inizializzo la struttura dati del gestore
@@ -416,7 +398,7 @@ int main(int argc, char *argv[]) {
   dati.capo_scrittore = &capo_scrittore;
   dati.dati_tab = &dati_tab;
 
-  xpthread_create(&gestore, NULL, handler, &dati,__LINE__,__FILE__);
+  xpthread_create(&gestore, NULL, gestore_body, &dati,__LINE__,__FILE__);
 
   //starto il capo dei lettori
   xpthread_create(&capo_lettore, NULL, capo_lett_body, &dati_capo_lettore, __LINE__, __FILE__);
