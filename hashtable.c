@@ -70,7 +70,6 @@ void table_destroy(tabella_hash *tab){
   xpthread_cond_destroy(tab->condStabella, __LINE__, __FILE__);
 }
 
-//funzione che monitora accesso lettori consumatori alla tabella in entrata
 void readtable_access(tabella_hash *tab){
 
   //per modificare il numero di lettori nella tabella acquisisco la lock
@@ -101,7 +100,7 @@ void writetable_lock(tabella_hash *tab){
 
 }
 
-//funzione che permette ad uno scrittore consumatore di uscire dalla tabellaqqqq
+//funzione che permette ad uno scrittore consumatore di uscire dalla tabella
 void writetable_unlock(tabella_hash *tab){
   xpthread_mutex_unlock(tab->mutabella,__LINE__,__FILE__);
 }
