@@ -4,7 +4,6 @@ from threading import Lock
 
 Description ="""Server che gestisce più client nell'accesso ad un archivio"""
 
-# host e porta di default
 HOST = "127.0.0.1" 
 PORT = 59364
 MAX = 2048
@@ -51,9 +50,8 @@ def main(t, r, w, v):
 
     pid = os.getpid()
 
-    print("il pid dell'archivio è: ", p.pid)
-
     print("Server: archivio in esecuzione")
+    print("Il pid dell'archivio è: ", p.pid);
 
     #apro il server socket
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -72,7 +70,7 @@ def main(t, r, w, v):
             conn, addr = s.accept()
             #e passo al thread la funzione di gestione e i parametri
             executor.submit(gestisci_connessione, conn, addr, fd_l, fd_s, p, lock)
-      #se intercetto una SIGINT la gestisco
+      #se intercetto una SIGINT esco e gestisco
       except KeyboardInterrupt:
         pass
       print('Server: Terminazione Server')
@@ -97,6 +95,7 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p, lock):
       data = recv_all(conn,2)
       l = struct.unpack("<h",data)[0]
       seq = recv_all(conn, l)
+      #stampo nel file di log
       logging.debug(f"Connessione con {addr} di tipo {tipo}, {l+3} bytes inviati")
       #preparo i dati per inviarli sulla FIFO
       bd = struct.pack("<h", l)
@@ -118,6 +117,7 @@ def gestisci_connessione(conn, addr, fd_l, fd_s, p, lock):
         if(l==0):
           break
         seq = recv_all(conn, l)
+        #stampo nel file di log
         logging.debug(f"Connessione con {addr} di tipo {tipo},{i} riga, {l+3} bytes inviati") 
         b = b+l+3
         i = i+1
