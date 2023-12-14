@@ -14,7 +14,7 @@
 ## File prodotti dall'esecuzione dei programmi
 
 - **error_file.txt** : file dove viene ridiretto lo stderr del programma archivio.c. 
-- **server.log** : file di log dove vengono monitorate le righe inviate per ogni connessione.
+- **server.log** : file di log dove vengono monitorate le righe inviate per ogni connessione. 
 - **lettori.log** : file dove i lettori scrivono il risultato delle loro interrogazioni all'archivio.
 - **valgrind-xxxxxxx** : file di log prodotto dall'esecuzione di archivio con valgrind (con "xxxxxxx" PID del processo archivio).
 
@@ -127,17 +127,17 @@ Ognuno dei capi esegue sostanzialmente le solite operazioni:
 
 - Vengono creati i thread consumatori ausiliari, ognuno dei quali ha la sua struttura dati (vedere **dati_consumatore**)
 
-- Viene aperta una FIFO in sola lettura e comincia la lettura. Itera nel ciclo finche la FIFO non viene chiusa in scrittura dal server. Leggo un intero **dim** e una stringa **max** lunga dim. Poi, per ogni stringa tokenizzata, il produttore, con una wait su **a->sem_free_slots**, aspetta che ci siano slot liberi per inserire un elemento e dopo aver scritto, segnala con una post su **a->sem_data_items** la presenza di elementi nel buffer. Simmetricamente, i consumatori aspettano con una wait su **a->sem_data_items**che ci sia almeno un elemento da prelevare ma, essendoci tanti consumatori, acquisisce anche la lock del buffer prima di scriverci. Successivamente segnala uno slot libero con una post su **a->sem_free_slots**.
+- Viene aperta una FIFO in sola lettura e comincia la lettura. Itera nel ciclo finche la FIFO non viene chiusa in scrittura dal server. Leggo un intero **dim** e una stringa **max** lunga dim. Poi, per ogni stringa tokenizzata, il capo produttore, con una wait su **a->sem_free_slots**, aspetta che ci siano slot liberi per inserire un elemento e dopo aver scritto, segnala con una post su **a->sem_data_items** la presenza di elementi nel buffer. Simmetricamente, i consumatori aspettano con una wait su **a->sem_data_items**che ci sia almeno un elemento da prelevare ma, essendoci tanti consumatori, acquisisce anche la lock del buffer prima di scriverci. Successivamente segnala uno slot libero con una post su **a->sem_free_slots**.
 
 - Quando la FIFO viene chiusa, viene scritto NULL nel buffer per ogni thread consumatore per segnalare che non ci sono più dati da consumare e si attende che tutti i thread lettori terminino.
 
 Nel main e negli altri thread blocco tutti i segnali, per far sì che sia il thread gestore a gestirli.
 Il thread gestore creato nel main, entra in un ciclo e fa una sigwait attendendo i segnali. Dato che sigwait è bloccante, non è necessario rendere async-safe il corpo del gestore. Successivamente gestisce SIGINT e SIGTERM.
-Dopo che il segnale SIGTERM interrompe il ciclo, il thread gestore esegue pthread_join per attendere la terminazione dei thread capo_lettore e capo_scrittore e ritorna al main.
+Dopo che il segnale SIGTERM interrompe il ciclo, il thread gestore esegue pthread_join per attendere la terminazione dei thread capo_lettore e capo_scrittore e ritorna al main, che con una join attenderà la terminazione del gestore.
 
 ## Logica di accesso alla tabella hash
 
-Alla tabella hash accedono i consumatori lettori e i consumatori scrittori, rispettivamente per chiamare la funzione conta e la procedura aggiungi. Quando un lettore deve chiamare conta, prima chiama **readtable_access**, funzione che permette di incrementare in modo safe il numero di lettori presenti (**lettori_tabella**) acquisendo la lock. Se la lock è acquisita dallo scrittore (che la acquisirà per tutta la durata della scrittura). Poi, rilascia subito la lock poichè deve soltanto leggere, e non scrivere modificando la tabella. Successivamente chiama **readtable_exit** per decrementare lettori_tabella e per svegliare, se ci sono, scrittori in attesa, che concorreranno per acquisire la lock.
+Alla tabella hash accedono i consumatori lettori e i consumatori scrittori, rispettivamente per chiamare la funzione **conta** e la procedura **aggiungi**. Quando un lettore deve chiamare conta, prima chiama **readtable_access**, funzione che permette di incrementare in modo safe il numero di lettori presenti (**lettori_tabella**) acquisendo la lock. Se la lock è acquisita dallo scrittore (che la acquisirà per tutta la durata della scrittura). Poi, rilascia subito la lock poichè deve soltanto leggere, e non scrivere modificando la tabella. Successivamente chiama **readtable_exit** per decrementare lettori_tabella e per svegliare, se ci sono, scrittori in attesa, che concorreranno per acquisire la lock.
 
 Quando invece uno scrittore deve chiamare aggiungi, mantiene acquisita la lock(chiamando **writetable_lock**) per tutta la durata del suo accesso, poichè deve modificare la tabella e la variabile dati_aggiunti. Chiamando **writetable_lock** inoltre, lo scrittore aspetta finchè non ci sono più lettori presenti nella tabella (di scrittori ce ne sarà sempre uno solo, quello con la lock acquisita), per poi acquisire la lock. Al termine della scrittura, chiamando **writetable_unlock**, esce dalla tabella e rilascia la lock.
 

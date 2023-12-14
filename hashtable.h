@@ -7,6 +7,7 @@
 typedef struct {
   int *dati_aggiunti;               //numero totale delle stringhe aggiunte alla tabella
   int *lettori_tabella;             //lettori nella tabella 
+  bool *writing;                    //scrittore in tabella
   pthread_mutex_t *mutabella;       //mutex per accesso alla tabella hash e ai dati (sopra)
   pthread_cond_t *condStabella;     //cv per scrittori
 } tabella_hash;

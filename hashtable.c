@@ -60,6 +60,7 @@ void table_init(tabella_hash *tab){
 
     *(tab->lettori_tabella) = 0;
     *(tab->dati_aggiunti) = 0;
+    *(tab->writing) = false;
     xpthread_mutex_init(tab->mutabella,NULL,__LINE__,__FILE__);
     xpthread_cond_init(tab->condStabella,NULL,__LINE__,__FILE__);
 }
@@ -74,6 +75,10 @@ void readtable_access(tabella_hash *tab){
 
   //per modificare il numero di lettori nella tabella acquisisco la lock
   xpthread_mutex_lock(tab->mutabella, __LINE__,__FILE__);
+  while((*(tab->writing))){
+    //attende fine scrittura
+     xpthread_cond_wait(tab->condStabella, tab->mutabella,__LINE__,__FILE__);   
+  }
   (*(tab->lettori_tabella))++;
   xpthread_mutex_unlock(tab->mutabella, __LINE__,__FILE__);
 }
@@ -81,11 +86,14 @@ void readtable_access(tabella_hash *tab){
 //funzione che monitora uscita lettori consumatori dalla tabella
 void readtable_exit(tabella_hash *tab){
   assert(*(tab->lettori_tabella)>0);  // ci deve essere almeno un reader (me stesso)
+  assert(!(*(tab->writing)));
   //per modificare il numero di lettori nella tabella acquisisco la lock
   xpthread_mutex_lock(tab->mutabella, __LINE__, __FILE__);
   (*(tab->lettori_tabella))--;                  // cambio di stato
-  //se ci sono scrittori in attesa, li sveglio       
-  xpthread_cond_broadcast(tab->condStabella,__LINE__, __FILE__);
+  //se ci sono scrittori in attesa, li sveglio    
+  if(*(tab->lettori_tabella) == 0)  
+    //segnalo ad un solo writer
+    xpthread_cond_signal(tab->condStabella,__LINE__, __FILE__);
   xpthread_mutex_unlock(tab->mutabella,__LINE__,__FILE__);
 }
   
@@ -94,13 +102,19 @@ void writetable_lock(tabella_hash *tab){
 
     //per leggere il numero di lettori nella tabella acquisisco la lock
    xpthread_mutex_lock(tab->mutabella, __LINE__,__FILE__);
-    while((*(tab->lettori_tabella)) > 0)
+    while((*(tab->writing)) && (*(tab->lettori_tabella)) > 0)
       //attende che tutti i lettori abbiano finito di leggere
-      xpthread_cond_wait(tab->condStabella, tab->mutabella,__LINE__,__FILE__);   
+      xpthread_cond_wait(tab->condStabella, tab->mutabella,__LINE__,__FILE__);
+    *(tab->writing) = true;
+    xpthread_mutex_unlock(tab->mutabella,__LINE__,__FILE__);
 
 }
 
 //funzione che permette ad uno scrittore consumatore di uscire dalla tabella
 void writetable_unlock(tabella_hash *tab){
+  assert(*(tab->writing));
+  xpthread_mutex_lock(tab->mutabella,__LINE__,__FILE__);
+  *(tab->writing) = false;
+  xpthread_cond_broadcast(tab->condStabella,__LINE__, __FILE__);
   xpthread_mutex_unlock(tab->mutabella,__LINE__,__FILE__);
 }

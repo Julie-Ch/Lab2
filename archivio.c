@@ -160,7 +160,9 @@ void *capo_lett_body(void *arg){
 
   //chiudo estremità lettura della FIFO
   xclose(fd, __LINE__, __FILE__); 
+  //chiudo il file
   if(fclose(outfile)!=0) xtermina("errore fclose\n", __LINE__, __FILE__);
+
 
   //distruggo semafori e mutex
   xsem_destroy(a->sem_data_items,__LINE__, __FILE__);
@@ -344,8 +346,10 @@ int main(int argc, char *argv[]) {
   pthread_cond_t condScrittoriTab;
   pthread_mutex_t mutexTab;
   int lett_tab, dati_agg;
-  dati_tab.lettori_tabella=&lett_tab;
-  dati_tab.dati_aggiunti=&dati_agg;
+  bool scritt_tab;
+  dati_tab.lettori_tabella = &lett_tab;
+  dati_tab.dati_aggiunti = &dati_agg;
+  dati_tab.writing = &scritt_tab;
   dati_tab.condStabella = &condScrittoriTab;
   dati_tab.mutabella = &mutexTab;
   table_init(&dati_tab);
