@@ -2,9 +2,7 @@
 #include "hashtable.h"
 #include <sys/syscall.h>
 
-volatile sig_atomic_t sigint_received = 0;
-volatile sig_atomic_t sigterm_received = 0;
-
+volatile sig_atomic_t dati_aggiunti_global = 0;
 
 #define Num_elem 1000000            //dimensione tabella hash
 #define PC_buffer_len 10            //lunghezza bugger prod/cons
@@ -279,7 +277,6 @@ void *capo_scritt_body(void *arg){
   xpthread_mutex_destroy(&mux_scritt_c, __LINE__, __FILE__);
   //va bene anche return 0
   return (void *) 0;
-
 }
 
 void* gestore_body(void* arg) {
