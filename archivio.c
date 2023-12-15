@@ -4,6 +4,22 @@
 
 volatile sig_atomic_t dati_aggiunti_global = 0;
 
+
+// ridefinizione funzione gettid() (non è sempre disponibile) 
+#include <sys/syscall.h>   /* For SYS_xxx definitions */
+pid_t gettid(void)
+{
+	#ifdef __linux__
+	  // il tid è specifico di linux
+    pid_t tid = (pid_t)syscall(SYS_gettid);
+    return tid;
+  #else
+	  // per altri OS restituisco -1
+	  return -1;
+  #endif
+}
+
+
 #define Num_elem 1000000            //dimensione tabella hash
 #define PC_buffer_len 10            //lunghezza bugger prod/cons
 #define Max_sequence_length 2048    //massima lunghezza sequenza inviata attraverso una pipe
@@ -50,14 +66,15 @@ void *consumer_lett_body(void *arg){
   do {
     //aspetto finchè non c'è un dato
     xsem_wait(a->sem_data_items,__LINE__, __FILE__);
-    //acquisco mutex che gestisce conflitti tra consumatori (modifica a pcindex)
+    //il buffer ha più elementi e possono entrare più consumatori che modificano pcindex
+    //mutex che gestisce conflitti tra consumatori 
     xpthread_mutex_lock(a->mutex,__LINE__, __FILE__);
     //prelevo dal buffer la prossima stringa
     s = (a->buffer[((*(a->pcindex))++) % PC_buffer_len]);
     xpthread_mutex_unlock(a->mutex,__LINE__, __FILE__);
     //segnalo che c'è uno slot libero
     xsem_post(a->sem_free_slots,__LINE__, __FILE__);
-    //se leggo NULL (valore di terminazione), esco
+    //se leggo NULL (valore dummy), esco
     if(s == NULL) break;
     //entro nella tabella e chiamo la funzione
     readtable_access(a->dati_tab);
@@ -83,7 +100,6 @@ void *capo_lett_body(void *arg){
   FILE* outfile;
   //numero consumatori
   int r = a->aux;
-  //indice usato dal capo lettore per scrivere sul buffer
   int cl_index = 0;
   //mutex per gestire conflitti tra i consumatori
   pthread_mutex_t mux_let_c;
@@ -95,7 +111,6 @@ void *capo_lett_body(void *arg){
   pthread_t lettori[r]; 
   //array per memorizzare le strutture dati dei lettori
   dati_consumatori dati_let[r];
-  //apro il file in lettura/scrittura e se non esiste lo creo
   outfile = fopen("lettori.log", "w+");
   if(outfile == NULL) xtermina("errore apertura outfile", __LINE__, __FILE__);
 
@@ -122,7 +137,7 @@ void *capo_lett_body(void *arg){
     char *max;
     ssize_t e;
 
-  //leggo dalla FIFO dim e stringa finchè non viene chiusa in scrittura
+    //leggo dalla FIFO un intero e la stringa 
     while(true){
       e = read(fd,&dim,sizeof(dim));
       if(e != sizeof(dim)) break;
@@ -160,11 +175,7 @@ void *capo_lett_body(void *arg){
 
   //chiudo estremità lettura della FIFO
   xclose(fd, __LINE__, __FILE__); 
-  //chiudo il file
   if(fclose(outfile)!=0) xtermina("errore fclose\n", __LINE__, __FILE__);
-
-
-  //distruggo semafori e mutex
   xsem_destroy(a->sem_data_items,__LINE__, __FILE__);
   xsem_destroy(a->sem_free_slots,__LINE__, __FILE__);
   xpthread_mutex_destroy(&mux_let_c, __LINE__, __FILE__);
@@ -177,12 +188,14 @@ void *capo_lett_body(void *arg){
 //corpo del consumatore scrittore
 void *consumer_scritt_body(void *arg){
    
+
   dati_consumatori *a = (dati_consumatori*)arg;
   char *s;
 
   do {
     //aspetto finchè non c'è un dato
     xsem_wait(a->sem_data_items,__LINE__, __FILE__);
+    //il buffer ha più elementi e possono entrare più consumatori, modificando pcindex
     //mutex che gestisce conflitti tra consumatori 
     xpthread_mutex_lock(a->mutex,__LINE__, __FILE__);
     //prelevo dal buffer la prossima stringa
@@ -190,7 +203,6 @@ void *consumer_scritt_body(void *arg){
     xpthread_mutex_unlock(a->mutex,__LINE__, __FILE__);
     //segnalo che c'è uno slot libero
     xsem_post(a->sem_free_slots,__LINE__, __FILE__);
-    //se leggo NULL (valore di terminazione), esco
     if(s==NULL) break;
     //aggiungo il dato alla tabella
     writetable_lock(a->dati_tab);
@@ -238,7 +250,7 @@ void *capo_scritt_body(void *arg){
   char *max;
 	ssize_t e;
 
-  //leggo dalla FIFO dim e stringa finchè non viene chiusa in scrittura
+  //leggo dalla FIFO
   while(true){
     e = read(fd,&dim,sizeof(dim));
     if(e != sizeof(dim)) break;
@@ -276,7 +288,6 @@ void *capo_scritt_body(void *arg){
 
   //chiudo estremità lettura della FIFO
   xclose(fd,__LINE__, __FILE__);
-  //distruggo semafori e mutex
   xsem_destroy(a->sem_data_items,__LINE__, __FILE__);
   xsem_destroy(a->sem_free_slots,__LINE__, __FILE__);
   xpthread_mutex_destroy(&mux_scritt_c, __LINE__, __FILE__);
@@ -284,36 +295,89 @@ void *capo_scritt_body(void *arg){
   return (void *) 0;
 }
 
-void* gestore_body(void* arg) {
+void gestore(int sig) {
 
-  sigset_t set;
-  sigfillset(&set);
-  int sig;
+  //printf("tid handler: %d\n", gettid());
+  int val = dati_aggiunti_global;
+  int len = 14;
+  char buf[16] = {0};
+  buf[15] = '\0'; 
+  int e;
+  do {
+    buf[len--] = '0' + (val % 10); 
+    val /= 10;
+  } while(val != 0);
+  e = write(STDERR_FILENO, buf + len + 1, 14 - len);
+  if(e == -1) perror("Errore write");
+}
+
+void gestore_term(int sig) {
+
+  //printf("tid handler: %d\n", gettid());
+  int val = dati_aggiunti_global;
+  int len = 14;
+  //inizializzo a 0
+  char buf[16] = {0};
+  //e metto carattere terminatore
+  buf[15] = '\0'; 
+  int e;
+  do {
+      //converto ogni numero in char e recupero le cifres
+      buf[len--] = '0' + (val % 10); 
+      val /= 10;
+  } while(val != 0);
+  //ignorando gli 0 iniziali, e rispostandomi con +1 al punto giusto nel buf, scrivo 14-len byte
+  e = write(STDOUT_FILENO, buf + len + 1, 14 - len);
+  if(e == -1) perror("Errore write");
+}
+
+
+void* gestore_body(void* arg) {
 
   dati_gestore *d = (dati_gestore*) arg;
 
-  while(1) {
+  //printf("tid gestore: %d\n", gettid());
 
-      // Aspetta i segnali 
-      sigwait(&set, &sig);
+  struct sigaction sa;
+  int sig;
 
-      if(sig == SIGINT) {
-          xpthread_mutex_lock(d->dati_tab->mutabella, __LINE__, __FILE__);
-          int val = *((d->dati_tab)->dati_aggiunti);
-          xpthread_mutex_unlock(d->dati_tab->mutabella, __LINE__, __FILE__);
-          fprintf(stderr, "Stringhe contenute nella tabella: %d\n", val);
-      }
-      else if(sig == SIGTERM) {
-          xpthread_mutex_lock(d->dati_tab->mutabella, __LINE__, __FILE__);
-          int val = *((d->dati_tab)->dati_aggiunti);
-          xpthread_mutex_unlock(d->dati_tab->mutabella, __LINE__, __FILE__);
-          fprintf(stdout, "Stringhe contenute nella tabella: %d\n", val);
-          break;
-      }else{
-        signal(sig, SIG_DFL);
-      }
+  sa.sa_handler = &gestore;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+
+  if (sigaction(SIGINT, &sa, NULL) == -1) {
+      perror("sigaction");
+      return NULL;
+  }
+  
+  sa.sa_handler = &gestore_term;
+  if (sigaction(SIGTERM, &sa, NULL) == -1) {
+      perror("sigaction");
+      return NULL;
   }
 
+  sigset_t mask;
+  sigfillset(&mask);
+  pthread_sigmask(SIG_UNBLOCK, &mask, NULL);
+
+  while(1) {
+    sigwait(&mask, &sig); // Aspetta i segnali
+    //acquisisco la lock solo per leggere e per leggere dati consistenti
+    xpthread_mutex_lock((d->dati_tab)->mutabella, __LINE__, __FILE__);
+    dati_aggiunti_global = *((d->dati_tab)->dati_aggiunti);
+    xpthread_mutex_unlock((d->dati_tab)->mutabella, __LINE__, __FILE__);
+    
+    if(sig == SIGTERM){
+      raise(sig);
+      break;
+    }else if(sig == SIGINT){ 
+      raise(sig);
+    }else{
+      signal(sig, SIG_DFL);
+      raise(sig);
+    }
+  }
+  
   // Dopo SIGTERM e fuori dal ciclo di gestione attende la terminazione dei capi
   xpthread_join(*(d->capo_lettore), NULL, __LINE__, __FILE__);
   xpthread_join(*(d->capo_scrittore), NULL, __LINE__, __FILE__);
@@ -346,10 +410,10 @@ int main(int argc, char *argv[]) {
   pthread_cond_t condScrittoriTab;
   pthread_mutex_t mutexTab;
   int lett_tab, dati_agg;
-  bool scritt_tab;
-  dati_tab.lettori_tabella = &lett_tab;
-  dati_tab.dati_aggiunti = &dati_agg;
-  dati_tab.writing = &scritt_tab;
+  bool writing;
+  dati_tab.lettori_tabella=&lett_tab;
+  dati_tab.dati_aggiunti=&dati_agg;
+  dati_tab.writing = &writing;
   dati_tab.condStabella = &condScrittoriTab;
   dati_tab.mutabella = &mutexTab;
   table_init(&dati_tab);
@@ -389,10 +453,9 @@ int main(int argc, char *argv[]) {
   dati_capo_scrittore.aux = w;
   dati_capo_scrittore.dati_tab = &dati_tab;
 
-  
-  sigset_t mask;
-  sigfillset(&mask);  // insieme di tutti i segnali
-  pthread_sigmask(SIG_BLOCK,&mask,NULL); // blocco tutto 
+  sigset_t mask;  
+  sigfillset(&mask);
+  pthread_sigmask(SIG_SETMASK, &mask, NULL);
 
   pthread_t gestore;
   //inizializzo la struttura dati del gestore
